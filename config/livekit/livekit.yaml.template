@@ -4,13 +4,7 @@ rtc:
   port_range_start: 50000
   port_range_end: 50100
   use_external_ip: false
-  interfaces:
-    includes:
-      - tailscale0
-  ips:
-    includes:
-      - 100.64.0.0/10
-      - fd7a:115c:a1e0::/48
+  node_ip: "$LIVEKIT_NODE_IP"
 redis:
   address: matrix-redis:6379
 keys:

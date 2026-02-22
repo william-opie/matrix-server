@@ -54,6 +54,7 @@ Use `.env.example` as the source of truth. The values below are the main setting
 | `ELEMENT_CALL_URL` | Element Call URL used by Element Web call buttons | Point this to your self-hosted Element Call URL (for example `https://call-host.tailxxxx.ts.net` or `https://host.tailxxxx.ts.net:8443`). |
 | `MATRIX_RTC_LIVEKIT_SERVICE_URL` | Synapse MatrixRTC focus URL for group calls | Usually leave blank to auto-use `${ELEMENT_CALL_URL}/livekit/jwt`, or set explicitly if your path differs. |
 | `LIVEKIT_SFU_URL` | LiveKit WebSocket URL returned by MatrixRTC auth service | Usually leave blank to auto-use `wss://.../livekit/sfu` from `ELEMENT_CALL_URL`. |
+| `LIVEKIT_NODE_IP` | LiveKit media candidate IP | Set to the server's Tailscale IPv4 from `tailscale ip -4` for tailnet-only media. |
 | `TURN_REALM` | coturn auth realm used for Matrix VoIP | Set this to the same host as `MATRIX_SERVER_NAME`/`PUBLIC_BASEURL`. Mismatches can break calls. |
 | `TURN_SECRET` | Shared secret used for TURN credentials | Generate a long random secret and keep it private. |
 | `LIVEKIT_API_SECRET` | Secret for Element Call <-> LiveKit auth | Use at least 32 characters. |
@@ -79,7 +80,7 @@ tailscale status --self
 
 ### Tailnet-only media path
 
-- This stack configures LiveKit to advertise only Tailscale interface/IP candidates.
+- This stack configures LiveKit to advertise only the Tailscale IP in `LIVEKIT_NODE_IP`.
 - Group-call media stays on the tailnet and does not rely on public WAN ICE candidates.
 - Clients must be connected to Tailscale for voice/video to work.
 

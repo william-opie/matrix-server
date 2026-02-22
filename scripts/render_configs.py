@@ -80,6 +80,7 @@ def main() -> None:
         "SMTP_FROM",
         "LIVEKIT_API_KEY",
         "LIVEKIT_API_SECRET",
+        "LIVEKIT_NODE_IP",
         "ELEMENT_CALL_URL",
     ]
     missing = [k for k in required if not env.get(k)]

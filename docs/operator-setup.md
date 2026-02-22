@@ -10,6 +10,7 @@ Required before first startup:
   - `MATRIX_SERVER_NAME`
   - `PUBLIC_BASEURL`
   - `ELEMENT_CALL_URL`
+  - `LIVEKIT_NODE_IP`
   - `TURN_REALM`
 - Admin bootstrap:
   - `BOOTSTRAP_ADMIN_EMAIL`
@@ -31,8 +32,9 @@ tailscale status --self
 
 - Keep all three aligned to avoid call/sign-in edge cases caused by host/realm mismatches.
 - Set `ELEMENT_CALL_URL` to your Element Call Serve URL (for example `https://host.tailxxxx.ts.net:8443`).
+- Set `LIVEKIT_NODE_IP` to the host's Tailscale IPv4 from `tailscale ip -4`.
 - Optional: set `MATRIX_RTC_LIVEKIT_SERVICE_URL` if your LiveKit JWT endpoint is not `${ELEMENT_CALL_URL}/livekit/jwt`.
-- LiveKit media is configured tailnet-only in this repo (advertises `tailscale0` candidates only), so participants must be connected to Tailscale for calls.
+- LiveKit media is configured tailnet-only in this repo (advertises `LIVEKIT_NODE_IP` only), so participants must be connected to Tailscale for calls.
 
 ## 2) Start stack
 
