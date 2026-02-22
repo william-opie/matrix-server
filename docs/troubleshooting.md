@@ -40,3 +40,4 @@ docker compose logs -f admin-api
 - Check TURN connectivity and UDP firewall settings.
 - Confirm `TURN_REALM` matches the homeserver hostname (`MATRIX_SERVER_NAME` / `PUBLIC_BASEURL` host).
 - Confirm Tailnet users can reach Element Call URL.
+- If room calls open Jitsi, verify `ELEMENT_CALL_URL` is set, then re-render config and confirm `runtime/element/config.json` contains `"element_call": {"use_exclusively": true, ...}`.

@@ -83,6 +83,60 @@ def authed(method: str, path: str, token: str, data: dict | None = None) -> dict
     return request_json(method, f"{SYNAPSE_URL}{path}", data=data, headers=headers)
 
 
+def room_state_path(room_id: str, event_type: str, state_key: str = "") -> str:
+    encoded_room = urllib.parse.quote(room_id, safe="")
+    encoded_type = urllib.parse.quote(event_type, safe="")
+    encoded_key = urllib.parse.quote(state_key, safe="")
+    return f"/_matrix/client/v3/rooms/{encoded_room}/state/{encoded_type}/{encoded_key}"
+
+
+def get_room_state(token: str, room_id: str, event_type: str, state_key: str = "") -> dict | None:
+    try:
+        return authed("GET", room_state_path(room_id, event_type, state_key), token)
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return None
+        raise
+
+
+def put_room_state(token: str, room_id: str, event_type: str, content: dict, state_key: str = "") -> None:
+    authed("PUT", room_state_path(room_id, event_type, state_key), token, content)
+
+
+def ensure_room_name(token: str, room_id: str, display_name: str) -> None:
+    existing = get_room_state(token, room_id, "m.room.name") or {}
+    if existing.get("name") == display_name:
+        return
+    put_room_state(token, room_id, "m.room.name", {"name": display_name})
+
+
+def ensure_video_room_call_permissions(token: str, room_id: str) -> None:
+    required_event_levels = {
+        "im.vector.modular.widgets": 0,
+        "io.element.widgets.layout": 0,
+        "org.matrix.msc3401.call": 0,
+        "org.matrix.msc3401.call.member": 0,
+        "org.matrix.msc3401.call.member.encrypted": 0,
+        "org.matrix.msc3417.call": 0,
+    }
+    power_levels = get_room_state(token, room_id, "m.room.power_levels") or {}
+    events = power_levels.get("events")
+    if not isinstance(events, dict):
+        events = {}
+
+    changed = False
+    for event_type, level in required_event_levels.items():
+        if events.get(event_type) != level:
+            events[event_type] = level
+            changed = True
+
+    if not changed:
+        return
+
+    power_levels["events"] = events
+    put_room_state(token, room_id, "m.room.power_levels", power_levels)
+
+
 def ensure_room_alias(alias: str, token: str, room_id: str) -> None:
     encoded = urllib.parse.quote(alias, safe="")
     try:
@@ -122,17 +176,17 @@ def create_space(token: str, name: str, topic: str, server_name: str) -> str:
     return room_id
 
 
-def create_room(token: str, name: str, server_name: str) -> str:
-    alias = f"#{name}:{server_name}"
+def create_room(token: str, alias_name: str, display_name: str, server_name: str) -> str:
+    alias = f"#{alias_name}:{server_name}"
     existing = room_id_from_alias(alias, token)
     if existing:
         return existing
 
     payload = {
-        "name": name.capitalize(),
-        "topic": f"Default {name} room",
+        "name": display_name,
+        "topic": f"Default {alias_name} room",
         "preset": "private_chat",
-        "room_alias_name": name,
+        "room_alias_name": alias_name,
         "visibility": "private",
     }
     room = authed("POST", "/_matrix/client/v3/createRoom", token, payload)
@@ -201,9 +255,13 @@ def main() -> None:
 
     rooms = state.get("rooms", {})
     for room in default_rooms:
+        display_name = f"#{room}" if room == "video" else room.capitalize()
         if room not in rooms:
-            rooms[room] = create_room(admin_token, room, server_name)
+            rooms[room] = create_room(admin_token, room, display_name, server_name)
         link_room_to_space(admin_token, state["space_id"], rooms[room])
+        ensure_room_name(admin_token, rooms[room], display_name)
+        if room == "video":
+            ensure_video_room_call_permissions(admin_token, rooms[room])
 
     state["rooms"] = rooms
 

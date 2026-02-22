@@ -9,6 +9,7 @@ Required before first startup:
 - Tailnet identity:
   - `MATRIX_SERVER_NAME`
   - `PUBLIC_BASEURL`
+  - `ELEMENT_CALL_URL`
   - `TURN_REALM`
 - Admin bootstrap:
   - `BOOTSTRAP_ADMIN_EMAIL`
@@ -29,6 +30,7 @@ tailscale status --self
 ```
 
 - Keep all three aligned to avoid call/sign-in edge cases caused by host/realm mismatches.
+- Set `ELEMENT_CALL_URL` to your Element Call Serve URL (for example `https://host.tailxxxx.ts.net:8443`).
 
 ## 2) Start stack
 
@@ -46,11 +48,44 @@ This launches:
 
 ## 3) Configure Tailscale Serve
 
-Expose local services to tailnet users:
+Tailscale Serve proxies localhost HTTP ports onto your tailnet with automatic
+HTTPS certificate provisioning. Each command below maps a local service to an
+HTTPS port on your node's MagicDNS hostname (`MATRIX_SERVER_NAME`).
 
-- Matrix/Element (`ELEMENT_HTTP_PORT`)
-- Element Call (`ELEMENT_CALL_HTTP_PORT`)
-- Admin UI (`ADMIN_UI_HTTP_PORT`) only for trusted admins
+Port values below match `.env.example` defaults; adjust if you changed them.
+
+**Matrix + Element Web** (serves Synapse API and Element frontend):
+
+```bash
+tailscale serve --bg --https=443 http://127.0.0.1:8088
+```
+
+**Element Call** (video/voice calling UI):
+
+```bash
+tailscale serve --bg --https=8443 http://127.0.0.1:8089
+```
+
+**Admin UI** (restrict access to trusted operators):
+
+```bash
+tailscale serve --bg --https=8444 http://127.0.0.1:8090
+```
+
+Verify the routes are active:
+
+```bash
+tailscale serve status
+```
+
+> **Persistence:** Tailscale Serve rules created with `--bg` persist across
+> reboots on Tailscale v1.56+. If you are running an older version, see the
+> [Tailscale Serve docs](https://tailscale.com/kb/1312/serve) for alternative
+> approaches.
+
+> **Access control:** The Admin UI should only be reachable by trusted admins.
+> Consider using [Tailscale ACLs](https://tailscale.com/kb/1018/acls) to
+> restrict which tailnet users can reach the admin ports.
 
 ## 4) Registration model
 

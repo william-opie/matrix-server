@@ -41,6 +41,7 @@ Use `.env.example` as the source of truth. The values below are the main setting
 | --- | --- | --- |
 | `MATRIX_SERVER_NAME` | Synapse server name and room/user domain | Use your Tailscale node MagicDNS name (for example `beelinkopi3-server.tailxxxx.ts.net`). |
 | `PUBLIC_BASEURL` | Base URL clients use to reach Synapse | `https://` + the same host as `MATRIX_SERVER_NAME` in tailnet deployments. |
+| `ELEMENT_CALL_URL` | Element Call URL used by Element Web call buttons | Point this to your self-hosted Element Call URL (for example `https://call-host.tailxxxx.ts.net` or `https://host.tailxxxx.ts.net:8443`). |
 | `TURN_REALM` | coturn auth realm used for Matrix VoIP | Set this to the same host as `MATRIX_SERVER_NAME`/`PUBLIC_BASEURL`. Mismatches can break calls. |
 | `TURN_SECRET` | Shared secret used for TURN credentials | Generate a long random secret and keep it private. |
 | `LIVEKIT_API_SECRET` | Secret for Element Call <-> LiveKit auth | Generate a long random secret and keep it private. |
@@ -74,4 +75,6 @@ tailscale status --self
 
 - `runtime/` is generated from templates by `scripts/render_configs.py` via the `config-renderer` service.
 - `matrix-bootstrap` is idempotent and creates the initial admin user, default Space, and default rooms.
+- The default `video` room alias stays `#video:<server_name>` (Matrix requirement), but its display name is set to `#video`.
+- Element Web is configured to use your self-hosted Element Call URL exclusively for room conference calls.
 - Admin UI is protected by Tailnet access plus local admin login.

@@ -53,7 +53,7 @@ def build_retention_block(env: dict[str, str]) -> str:
 def main() -> None:
     env = {}
     env.update(load_env(ROOT / ".env"))
-    env.update({k: v for k, v in os.environ.items() if k in env or k.startswith(("MATRIX_", "POSTGRES_", "SMTP_", "BOOTSTRAP_", "RETENTION_", "TURN_", "LIVEKIT_", "ADMIN_", "REGISTRATION_", "PUBLIC_BASEURL", "ENABLE_", "AUTO_JOIN_", "MACAROON_", "FORM_"))})
+    env.update({k: v for k, v in os.environ.items() if k in env or k.startswith(("MATRIX_", "POSTGRES_", "SMTP_", "BOOTSTRAP_", "RETENTION_", "TURN_", "LIVEKIT_", "ELEMENT_", "ADMIN_", "REGISTRATION_", "PUBLIC_BASEURL", "ENABLE_", "AUTO_JOIN_", "MACAROON_", "FORM_"))})
 
     required = [
         "MATRIX_SERVER_NAME",
@@ -72,6 +72,7 @@ def main() -> None:
         "SMTP_FROM",
         "LIVEKIT_API_KEY",
         "LIVEKIT_API_SECRET",
+        "ELEMENT_CALL_URL",
     ]
     missing = [k for k in required if not env.get(k)]
     if missing:

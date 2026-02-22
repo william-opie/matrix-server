@@ -8,5 +8,10 @@
   "disable_guests": true,
   "brand": "Private Matrix",
   "show_labs_settings": false,
-  "default_theme": "light"
+  "default_theme": "dark",
+  "element_call": {
+    "url": "$ELEMENT_CALL_URL",
+    "brand": "Element Call",
+    "use_exclusively": true
+  }
 }
