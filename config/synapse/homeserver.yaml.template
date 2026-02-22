@@ -36,6 +36,13 @@ registration_requires_token: $REGISTRATION_REQUIRES_TOKEN
 enable_registration_without_verification: false
 suppress_key_server_warning: true
 
+experimental_features:
+  msc3266_enabled: true
+  msc4143_enabled: true
+  msc4222_enabled: true
+
+max_event_delay_duration: "$MAX_EVENT_DELAY_DURATION"
+
 email:
   smtp_host: "$SMTP_HOST"
   smtp_port: $SMTP_PORT
@@ -63,8 +70,18 @@ matrix_rtc:
     - type: livekit
       livekit_service_url: "$MATRIX_RTC_LIVEKIT_SERVICE_URL"
 
-experimental_features:
-  msc4143_enabled: true
+extra_well_known_client_content:
+  org.matrix.msc4143.rtc_foci:
+    - type: livekit
+      livekit_service_url: "$MATRIX_RTC_LIVEKIT_SERVICE_URL"
+
+rc_message:
+  per_second: $RC_MESSAGE_PER_SECOND
+  burst_count: $RC_MESSAGE_BURST_COUNT
+
+rc_delayed_event_mgmt:
+  per_second: $RC_DELAYED_EVENT_MGMT_PER_SECOND
+  burst_count: $RC_DELAYED_EVENT_MGMT_BURST_COUNT
 
 enable_room_list_search: true
 

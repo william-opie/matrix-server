@@ -85,6 +85,11 @@ def main() -> None:
     env["SMTP_ENABLE_TLS"] = to_bool(env.get("SMTP_ENABLE_TLS", "true"))
     if not env.get("MATRIX_RTC_LIVEKIT_SERVICE_URL"):
         env["MATRIX_RTC_LIVEKIT_SERVICE_URL"] = f"{env['ELEMENT_CALL_URL'].rstrip('/')}/livekit/jwt"
+    env.setdefault("MAX_EVENT_DELAY_DURATION", "24h")
+    env.setdefault("RC_MESSAGE_PER_SECOND", "0.5")
+    env.setdefault("RC_MESSAGE_BURST_COUNT", "30")
+    env.setdefault("RC_DELAYED_EVENT_MGMT_PER_SECOND", "1")
+    env.setdefault("RC_DELAYED_EVENT_MGMT_BURST_COUNT", "20")
     env["RETENTION_BLOCK"] = build_retention_block(env)
 
     render_template(

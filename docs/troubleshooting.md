@@ -43,3 +43,4 @@ docker compose logs -f admin-api
 - If room calls open Jitsi, verify `ELEMENT_CALL_URL` is set, then re-render config and confirm `runtime/element/config.json` contains `"element_call": {"use_exclusively": true, ...}` and `"features": {"feature_group_calls": true, ...}`.
 - If you see `MISSING_MATRIX_RTC_FOCUS`, verify Synapse has `matrix_rtc.transports` configured with a `livekit_service_url` (in this repo from `MATRIX_RTC_LIVEKIT_SERVICE_URL`, defaulting to `${ELEMENT_CALL_URL}/livekit/jwt`).
 - Synapse 1.147+ may require `experimental_features.msc4143_enabled: true` so Element's `/_matrix/client/unstable/org.matrix.msc4143/rtc/transports` request succeeds.
+- Ensure `/.well-known/matrix/client` is served by Synapse and includes `org.matrix.msc4143.rtc_foci` pointing to your LiveKit JWT endpoint.
