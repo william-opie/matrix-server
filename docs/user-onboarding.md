@@ -15,7 +15,7 @@
    - password,
    - invite token from admin.
 
-After signup, you are auto-joined into the default space and rooms.
+After signup, you are auto-joined into the root community space and default rooms.
 
 ## Secure Backup setup (strongly recommended before any logout)
 

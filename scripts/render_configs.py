@@ -88,6 +88,11 @@ def main() -> None:
         raise SystemExit(f"Missing required env vars: {', '.join(missing)}")
 
     auto_join_rooms = [room.strip() for room in env.get("AUTO_JOIN_ROOMS", "").split(",") if room.strip()]
+    space_alias = env.get("BOOTSTRAP_SPACE_ALIAS", "community").strip()
+    if space_alias:
+        root_space = f"#{space_alias}:{env['MATRIX_SERVER_NAME']}"
+        if root_space not in auto_join_rooms:
+            auto_join_rooms.append(root_space)
     env["AUTO_JOIN_ROOMS_YAML"] = "\n".join(f"  - \"{room}\"" for room in auto_join_rooms)
     env["ENABLE_REGISTRATION"] = to_bool(env.get("ENABLE_REGISTRATION", "true"))
     env["REGISTRATION_REQUIRES_TOKEN"] = to_bool(env.get("REGISTRATION_REQUIRES_TOKEN", "true"))
@@ -153,6 +158,7 @@ def main() -> None:
     bootstrap_meta = {
         "server_name": env["MATRIX_SERVER_NAME"],
         "space_name": env.get("BOOTSTRAP_SPACE_NAME", "Community HQ"),
+        "space_alias": env.get("BOOTSTRAP_SPACE_ALIAS", "community"),
         "rooms": [r.strip() for r in env.get("BOOTSTRAP_DEFAULT_ROOMS", "announcements,chat,video,support").split(",") if r.strip()],
     }
     out_path = ROOT / "runtime" / "bootstrap" / "meta.json"

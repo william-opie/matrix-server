@@ -13,6 +13,7 @@
 
 - User registers with username/password + token.
 - Synapse auto-joins the user to configured defaults in `AUTO_JOIN_ROOMS`.
+- The root Space alias `#${BOOTSTRAP_SPACE_ALIAS}:${MATRIX_SERVER_NAME}` is appended to auto-join at render time, so users also get the root Space in the Element sidebar.
 - Default Space and rooms are pre-created by bootstrap.
 
 ## Onboarding completion checklist (strong policy recommendation)

@@ -110,6 +110,13 @@ def ensure_room_name(token: str, room_id: str, display_name: str) -> None:
     put_room_state(token, room_id, "m.room.name", {"name": display_name})
 
 
+def ensure_room_topic(token: str, room_id: str, topic: str) -> None:
+    existing = get_room_state(token, room_id, "m.room.topic") or {}
+    if existing.get("topic") == topic:
+        return
+    put_room_state(token, room_id, "m.room.topic", {"topic": topic})
+
+
 def ensure_video_room_call_permissions(token: str, room_id: str) -> None:
     required_event_levels = {
         "im.vector.modular.widgets": 0,
@@ -155,12 +162,26 @@ def room_id_from_alias(alias: str, token: str) -> str | None:
         return None
 
 
-def create_space(token: str, name: str, topic: str, server_name: str) -> str:
-    alias_name = "community"
+def create_space(
+    token: str,
+    name: str,
+    topic: str,
+    alias_name: str,
+    server_name: str,
+    existing_space_id: str | None = None,
+) -> str:
     alias = f"#{alias_name}:{server_name}"
     existing = room_id_from_alias(alias, token)
     if existing:
+        ensure_room_name(token, existing, name)
+        ensure_room_topic(token, existing, topic)
         return existing
+
+    if existing_space_id:
+        ensure_room_alias(alias, token, existing_space_id)
+        ensure_room_name(token, existing_space_id, name)
+        ensure_room_topic(token, existing_space_id, topic)
+        return existing_space_id
 
     payload = {
         "creation_content": {"type": "m.space"},
@@ -173,6 +194,8 @@ def create_space(token: str, name: str, topic: str, server_name: str) -> str:
     room = authed("POST", "/_matrix/client/v3/createRoom", token, payload)
     room_id = room["room_id"]
     ensure_room_alias(alias, token, room_id)
+    ensure_room_name(token, room_id, name)
+    ensure_room_topic(token, room_id, topic)
     return room_id
 
 
@@ -245,13 +268,20 @@ def main() -> None:
     shared_secret_register(admin_localpart, admin_password, admin=True, shared_secret=shared_secret)
     admin_token = login(admin_localpart, admin_password, server_name)
 
-    if "space_id" not in state:
-        state["space_id"] = create_space(
-            admin_token,
-            os.environ.get("BOOTSTRAP_SPACE_NAME", "Community HQ"),
-            os.environ.get("BOOTSTRAP_SPACE_TOPIC", "Main community space"),
-            server_name,
-        )
+    space_name = os.environ.get("BOOTSTRAP_SPACE_NAME", "Community HQ")
+    space_topic = os.environ.get("BOOTSTRAP_SPACE_TOPIC", "Main community space")
+    space_alias = os.environ.get("BOOTSTRAP_SPACE_ALIAS", "community").strip()
+    if not space_alias:
+        raise RuntimeError("BOOTSTRAP_SPACE_ALIAS must not be empty")
+
+    state["space_id"] = create_space(
+        admin_token,
+        space_name,
+        space_topic,
+        space_alias,
+        server_name,
+        state.get("space_id"),
+    )
 
     rooms = state.get("rooms", {})
     for room in default_rooms:

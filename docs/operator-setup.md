@@ -16,6 +16,8 @@ Required before first startup:
   - `BOOTSTRAP_ADMIN_EMAIL`
   - `BOOTSTRAP_ADMIN_PASSWORD`
   - `BOOTSTRAP_ADMIN_LOCALPART`
+  - `BOOTSTRAP_SPACE_NAME`
+  - `BOOTSTRAP_SPACE_ALIAS`
 - Secrets (`CHANGE_ME_*` values)
 - SMTP settings (`SMTP_*`) for self-service password reset
 
@@ -101,6 +103,14 @@ that validates MatrixRTC/LiveKit routing and key self-hosting posture checks.
 - Open registration is disabled by token requirement.
 - Create invite tokens via Admin UI.
 - Default token is also created during bootstrap (`data/bootstrap/bootstrap-state.json`).
+- New users auto-join room aliases in `AUTO_JOIN_ROOMS`.
+- The root Space alias `#${BOOTSTRAP_SPACE_ALIAS}:${MATRIX_SERVER_NAME}` is automatically appended to `AUTO_JOIN_ROOMS` during config rendering, so new users also land in the Space sidebar.
+
+### Space naming and aliasing
+
+- `BOOTSTRAP_SPACE_NAME` controls the display name users see in Element.
+- `BOOTSTRAP_SPACE_ALIAS` controls the root Space alias slug (`#<alias>:<server>`).
+- Updating either value is safe on existing deployments; rerun `config-renderer` and `matrix-bootstrap` (or `docker compose up -d --force-recreate`) to apply changes.
 
 ## 5) Retention policy
 

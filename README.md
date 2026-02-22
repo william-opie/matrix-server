@@ -64,6 +64,8 @@ Use `.env.example` as the source of truth. The values below are the main setting
 | `FORM_SECRET` | Synapse form/CSRF-related secret material | Generate a long random secret. |
 | `BOOTSTRAP_ADMIN_EMAIL` | Initial admin login email | Set to the operator/admin email you will use. |
 | `BOOTSTRAP_ADMIN_PASSWORD` | Initial admin login password | Set a strong unique password, then rotate per your policy. |
+| `BOOTSTRAP_SPACE_NAME` | Display name of the root Matrix Space shown in Element | Set your community label (for example `Acme Community`). |
+| `BOOTSTRAP_SPACE_ALIAS` | Alias slug for the root Matrix Space (`#<alias>:<server>`) | Use a short stable slug (for example `community` or `acme`). |
 | `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Password reset email delivery settings | Use your SMTP provider credentials and TLS requirements. |
 
 ### How to obtain `TURN_REALM`
@@ -101,6 +103,7 @@ tailscale status --self
 
 - `runtime/` is generated from templates by `scripts/render_configs.py` via the `config-renderer` service.
 - `matrix-bootstrap` is idempotent and creates the initial admin user, default Space, and default rooms.
+- New users auto-join `AUTO_JOIN_ROOMS`, and the root Space alias `#${BOOTSTRAP_SPACE_ALIAS}:${MATRIX_SERVER_NAME}` is always appended during config rendering.
 - Element Web is configured to use your self-hosted Element Call URL exclusively for room conference calls.
 - Admin UI is protected by Tailnet access plus local admin login.
 - Admin UI includes a "Self-Hosting Health" panel that checks local call-stack routing/config and highlights drift.
