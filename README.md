@@ -39,6 +39,10 @@ Quick links:
 - Common issues and recovery steps: `docs/troubleshooting.md`
 - Operator setup and deployment flow: `docs/operator-setup.md`
 
+Onboarding policy recommendation: strongly encourage every new user to enable
+Secure Backup and store recovery material before logging out, or they may lose
+access to old encrypted message history.
+
 ## Configuration reference (`.env`)
 
 Use `.env.example` as the source of truth. The values below are the main settings most operators need to set first.

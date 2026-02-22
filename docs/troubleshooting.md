@@ -24,6 +24,8 @@ docker compose logs -f synapse
 
 - See `docs/user-onboarding.md` for a full end-user walkthrough of
   "Confirm your identity" and key-backup prevention steps.
+- Prevention note: this is much less likely when users complete Secure Backup
+  setup during onboarding and store their recovery key/passphrase safely.
 - If Element shows "Confirm your identity", recover keys with one of these:
   1. Verify this device from another trusted signed-in device.
   2. Restore Secure Backup with your recovery key/passphrase.

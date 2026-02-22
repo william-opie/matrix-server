@@ -17,6 +17,23 @@
 
 After signup, you are auto-joined into the default space and rooms.
 
+## Secure Backup setup (strongly recommended before any logout)
+
+Before you log out of your first signed-in session, set up Secure Backup in
+Element and save the recovery key/passphrase.
+
+- This greatly reduces the risk of losing access to old encrypted messages.
+- If you lose all trusted sessions and your recovery key/passphrase, encrypted
+  message history may be unrecoverable.
+- Non-encrypted room history is not affected by missing recovery keys.
+
+Typical path in Element:
+
+1. Open Settings.
+2. Go to Security and Privacy.
+3. Enable Secure Backup.
+4. Save the recovery key/passphrase in a password manager and an offline copy.
+
 ## Log in on another device
 
 Use the same username/password and homeserver URL.
@@ -41,7 +58,7 @@ still sign in, but old encrypted history may remain unreadable.
 
 ## Before you log out of your last device
 
-1. Enable Secure Backup in Element security settings.
+1. Confirm Secure Backup is enabled in Element security settings.
 2. Save your recovery key/passphrase in a password manager and an offline copy.
 3. Keep at least one other trusted signed-in device whenever possible.
 

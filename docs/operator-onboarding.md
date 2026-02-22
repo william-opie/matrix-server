@@ -15,6 +15,16 @@
 - Synapse auto-joins the user to configured defaults in `AUTO_JOIN_ROOMS`.
 - Default Space and rooms are pre-created by bootstrap.
 
+## Onboarding completion checklist (strong policy recommendation)
+
+Before marking onboarding complete, ask the user to confirm:
+
+1. They enabled Secure Backup in Element.
+2. They saved their recovery key/passphrase in a password manager and offline copy.
+
+Reason: without a trusted signed-in device or recovery key/passphrase, old
+encrypted history may be unrecoverable after logout/device loss.
+
 ## Recommended invite policy
 
 - Generate one token per user.
