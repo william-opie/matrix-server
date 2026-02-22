@@ -347,7 +347,9 @@ def self_hosting_health(user: dict = Depends(get_current_user)) -> dict:
     try:
         nginx_conf = call_nginx_path.read_text(encoding="utf-8")
         has_jwt_route = "/livekit/jwt/" in nginx_conf and "matrix-livekit-jwt:8080" in nginx_conf
-        has_sfu_route = "/livekit/sfu/" in nginx_conf and "matrix-livekit:7880" in nginx_conf
+        has_sfu_route = "/livekit/sfu/" in nginx_conf and (
+            "matrix-livekit:7880" in nginx_conf or "host.docker.internal:7880" in nginx_conf
+        )
         add_check(
             "call_proxy_routes",
             "Element Call proxy routes to local services",

@@ -26,6 +26,6 @@ server {
     proxy_read_timeout 120;
     proxy_send_timeout 120;
     proxy_buffering off;
-    proxy_pass http://matrix-livekit:7880/;
+    proxy_pass http://host.docker.internal:7880/;
   }
 }

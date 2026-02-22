@@ -50,6 +50,8 @@ This launches:
 - `admin-api` + `admin-ui`.
 - `livekit` + `element-call`.
 
+LiveKit runs with host networking in this stack so ICE/media binds directly on host ports (`7881/tcp`, `50000-50100/udp`). Ensure those ports are available on the host.
+
 ## 3) Configure Tailscale Serve
 
 Tailscale Serve proxies localhost HTTP ports onto your tailnet with automatic
