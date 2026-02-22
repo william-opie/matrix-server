@@ -83,6 +83,8 @@ def main() -> None:
     env["ENABLE_REGISTRATION"] = to_bool(env.get("ENABLE_REGISTRATION", "true"))
     env["REGISTRATION_REQUIRES_TOKEN"] = to_bool(env.get("REGISTRATION_REQUIRES_TOKEN", "true"))
     env["SMTP_ENABLE_TLS"] = to_bool(env.get("SMTP_ENABLE_TLS", "true"))
+    if not env.get("MATRIX_RTC_LIVEKIT_SERVICE_URL"):
+        env["MATRIX_RTC_LIVEKIT_SERVICE_URL"] = f"{env['ELEMENT_CALL_URL'].rstrip('/')}/livekit/jwt"
     env["RETENTION_BLOCK"] = build_retention_block(env)
 
     render_template(

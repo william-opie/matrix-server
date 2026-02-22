@@ -58,6 +58,11 @@ turn_shared_secret: "$TURN_SECRET"
 turn_user_lifetime: 86400000
 turn_allow_guests: false
 
+matrix_rtc:
+  transports:
+    - type: livekit
+      livekit_service_url: "$MATRIX_RTC_LIVEKIT_SERVICE_URL"
+
 enable_room_list_search: true
 
 auto_join_rooms:

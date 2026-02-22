@@ -42,6 +42,7 @@ Use `.env.example` as the source of truth. The values below are the main setting
 | `MATRIX_SERVER_NAME` | Synapse server name and room/user domain | Use your Tailscale node MagicDNS name (for example `beelinkopi3-server.tailxxxx.ts.net`). |
 | `PUBLIC_BASEURL` | Base URL clients use to reach Synapse | `https://` + the same host as `MATRIX_SERVER_NAME` in tailnet deployments. |
 | `ELEMENT_CALL_URL` | Element Call URL used by Element Web call buttons | Point this to your self-hosted Element Call URL (for example `https://call-host.tailxxxx.ts.net` or `https://host.tailxxxx.ts.net:8443`). |
+| `MATRIX_RTC_LIVEKIT_SERVICE_URL` | Synapse MatrixRTC focus URL for group calls | Usually leave blank to auto-use `${ELEMENT_CALL_URL}/livekit/jwt`, or set explicitly if your path differs. |
 | `TURN_REALM` | coturn auth realm used for Matrix VoIP | Set this to the same host as `MATRIX_SERVER_NAME`/`PUBLIC_BASEURL`. Mismatches can break calls. |
 | `TURN_SECRET` | Shared secret used for TURN credentials | Generate a long random secret and keep it private. |
 | `LIVEKIT_API_SECRET` | Secret for Element Call <-> LiveKit auth | Generate a long random secret and keep it private. |
