@@ -77,6 +77,12 @@ tailscale status --self
 
 - Ensure these stay aligned: `MATRIX_SERVER_NAME` host, `PUBLIC_BASEURL` host, and `TURN_REALM`.
 
+### Tailnet-only media path
+
+- This stack configures LiveKit to advertise only Tailscale interface/IP candidates.
+- Group-call media stays on the tailnet and does not rely on public WAN ICE candidates.
+- Clients must be connected to Tailscale for voice/video to work.
+
 ## Service endpoints (local host bindings)
 
 - Matrix Web (Element): `http://127.0.0.1:${ELEMENT_HTTP_PORT}`

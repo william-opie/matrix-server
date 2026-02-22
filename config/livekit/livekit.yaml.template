@@ -3,7 +3,14 @@ rtc:
   tcp_port: 7881
   port_range_start: 50000
   port_range_end: 50100
-  use_external_ip: true
+  use_external_ip: false
+  interfaces:
+    includes:
+      - tailscale0
+  ips:
+    includes:
+      - 100.64.0.0/10
+      - fd7a:115c:a1e0::/48
 redis:
   address: matrix-redis:6379
 keys:

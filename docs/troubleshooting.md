@@ -50,6 +50,7 @@ docker compose logs -f admin-api
 - Ensure LiveKit media ports are reachable on the host (`50000-50100/udp` and `7881/tcp` in this stack).
 - Confirm `TURN_REALM` matches the homeserver hostname (`MATRIX_SERVER_NAME` / `PUBLIC_BASEURL` host).
 - Confirm Tailnet users can reach Element Call URL.
+- This stack is configured for tailnet-only media candidates. If calls fail on mobile data, verify the client is connected to Tailscale and not bypassing tailnet routing.
 - If room calls open Jitsi, verify `ELEMENT_CALL_URL` is set, then re-render config and confirm `runtime/element/config.json` contains `"element_call": {"use_exclusively": true, ...}` and `"features": {"feature_group_calls": true, ...}`.
 - If you see `MISSING_MATRIX_RTC_FOCUS`, verify Synapse has `matrix_rtc.transports` configured with a `livekit_service_url` (in this repo from `MATRIX_RTC_LIVEKIT_SERVICE_URL`, defaulting to `${ELEMENT_CALL_URL}/livekit/jwt`).
 - Synapse 1.147+ may require `experimental_features.msc4143_enabled: true` so Element's `/_matrix/client/unstable/org.matrix.msc4143/rtc/transports` request succeeds.

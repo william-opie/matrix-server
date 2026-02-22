@@ -32,6 +32,7 @@ tailscale status --self
 - Keep all three aligned to avoid call/sign-in edge cases caused by host/realm mismatches.
 - Set `ELEMENT_CALL_URL` to your Element Call Serve URL (for example `https://host.tailxxxx.ts.net:8443`).
 - Optional: set `MATRIX_RTC_LIVEKIT_SERVICE_URL` if your LiveKit JWT endpoint is not `${ELEMENT_CALL_URL}/livekit/jwt`.
+- LiveKit media is configured tailnet-only in this repo (advertises `tailscale0` candidates only), so participants must be connected to Tailscale for calls.
 
 ## 2) Start stack
 
