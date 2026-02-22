@@ -47,3 +47,4 @@ docker compose logs -f admin-api
 - Ensure `/.well-known/matrix/client` is served by Synapse and includes `org.matrix.msc4143.rtc_foci` pointing to your LiveKit JWT endpoint.
 - If `GET /livekit/jwt/sfu/get` returns `405`, ensure the Element Call endpoint is fronted by a reverse proxy routing `/livekit/jwt/*` to `lk-jwt-service` and `/livekit/sfu/*` to LiveKit.
 - If LiveKit logs `secret is too short`, set `LIVEKIT_API_SECRET` to at least 32 characters and restart `livekit` + `livekit-jwt`.
+- If `lk-jwt-service` logs `Failed to look up user info ... M_UNRECOGNIZED`, ensure Synapse listener resources include `federation` (not just `client`) so OpenID userinfo lookup is exposed.
