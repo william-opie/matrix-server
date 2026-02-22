@@ -8,6 +8,11 @@
   "disable_guests": true,
   "brand": "Private Matrix",
   "show_labs_settings": false,
+  "features": {
+    "feature_group_calls": true,
+    "feature_video_rooms": true,
+    "feature_element_call_video_rooms": true
+  },
   "default_theme": "dark",
   "element_call": {
     "url": "$ELEMENT_CALL_URL",

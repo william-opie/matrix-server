@@ -255,7 +255,7 @@ def main() -> None:
 
     rooms = state.get("rooms", {})
     for room in default_rooms:
-        display_name = f"#{room}" if room == "video" else room.capitalize()
+        display_name = room.capitalize()
         if room not in rooms:
             rooms[room] = create_room(admin_token, room, display_name, server_name)
         link_room_to_space(admin_token, state["space_id"], rooms[room])

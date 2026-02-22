@@ -75,6 +75,5 @@ tailscale status --self
 
 - `runtime/` is generated from templates by `scripts/render_configs.py` via the `config-renderer` service.
 - `matrix-bootstrap` is idempotent and creates the initial admin user, default Space, and default rooms.
-- The default `video` room alias stays `#video:<server_name>` (Matrix requirement), but its display name is set to `#video`.
 - Element Web is configured to use your self-hosted Element Call URL exclusively for room conference calls.
 - Admin UI is protected by Tailnet access plus local admin login.
