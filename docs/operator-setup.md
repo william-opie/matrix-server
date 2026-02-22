@@ -23,7 +23,7 @@ Required before first startup:
 
 ### Choosing `MATRIX_SERVER_NAME`, `PUBLIC_BASEURL`, and `TURN_REALM`
 
-- Use your Tailscale node MagicDNS hostname as `MATRIX_SERVER_NAME` (example: `host.tailxxxx.ts.net`).
+- Use your Tailscale node MagicDNS hostname as `MATRIX_SERVER_NAME` (example: `host.tailnet.ts.net`).
 - Set `PUBLIC_BASEURL` to `https://` plus that same hostname.
 - Set `TURN_REALM` to that same hostname as well.
 - You can find the hostname in the Tailscale admin UI (Machines list) or on the host with:
@@ -33,7 +33,7 @@ tailscale status --self
 ```
 
 - Keep all three aligned to avoid call/sign-in edge cases caused by host/realm mismatches.
-- Set `ELEMENT_CALL_URL` to your Element Call Serve URL (for example `https://host.tailxxxx.ts.net:8443`).
+- Set `ELEMENT_CALL_URL` to your Element Call Serve URL (for example `https://host.tailnet.ts.net:8443`).
 - Set `LIVEKIT_NODE_IP` to the host's Tailscale IPv4 from `tailscale ip -4`.
 - Optional: set `MATRIX_RTC_LIVEKIT_SERVICE_URL` if your LiveKit JWT endpoint is not `${ELEMENT_CALL_URL}/livekit/jwt`.
 - LiveKit media is configured tailnet-only in this repo (advertises `LIVEKIT_NODE_IP` only), so participants must be connected to Tailscale for calls.

@@ -21,7 +21,7 @@ Self-hosted Matrix stack designed for private Tailscale environments, with invit
    - `TURN_REALM`
    - `BOOTSTRAP_ADMIN_EMAIL`
    - `BOOTSTRAP_ADMIN_PASSWORD`
-   - For Tailscale deployments, set `TURN_REALM` to the same host as your Matrix server (usually your node MagicDNS name, like `host.tailxxxx.ts.net`).
+   - For Tailscale deployments, set `TURN_REALM` to the same host as your Matrix server (usually your node MagicDNS name, like `host.tailnet.ts.net`).
 3. Replace all `CHANGE_ME_*` values with strong secrets.
 4. Start the stack:
 
@@ -49,9 +49,9 @@ Use `.env.example` as the source of truth. The values below are the main setting
 
 | Variable | What it controls | How to choose it |
 | --- | --- | --- |
-| `MATRIX_SERVER_NAME` | Synapse server name and room/user domain | Use your Tailscale node MagicDNS name (for example `beelinkopi3-server.tailxxxx.ts.net`). |
+| `MATRIX_SERVER_NAME` | Synapse server name and room/user domain | Use your Tailscale node MagicDNS name (for example `host.tailnet.ts.net`). |
 | `PUBLIC_BASEURL` | Base URL clients use to reach Synapse | `https://` + the same host as `MATRIX_SERVER_NAME` in tailnet deployments. |
-| `ELEMENT_CALL_URL` | Element Call URL used by Element Web call buttons | Point this to your self-hosted Element Call URL (for example `https://call-host.tailxxxx.ts.net` or `https://host.tailxxxx.ts.net:8443`). |
+| `ELEMENT_CALL_URL` | Element Call URL used by Element Web call buttons | Point this to your self-hosted Element Call URL (for example `https://host.tailnet.ts.net:8443`). |
 | `MATRIX_RTC_LIVEKIT_SERVICE_URL` | Synapse MatrixRTC focus URL for group calls | Usually leave blank to auto-use `${ELEMENT_CALL_URL}/livekit/jwt`, or set explicitly if your path differs. |
 | `LIVEKIT_SFU_URL` | LiveKit WebSocket URL returned by MatrixRTC auth service | Usually leave blank to auto-use `wss://.../livekit/sfu` from `ELEMENT_CALL_URL`. |
 | `LIVEKIT_NODE_IP` | LiveKit media candidate IP | Set to the server's Tailscale IPv4 from `tailscale ip -4` for tailnet-only media. |
