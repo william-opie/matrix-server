@@ -63,6 +63,9 @@ matrix_rtc:
     - type: livekit
       livekit_service_url: "$MATRIX_RTC_LIVEKIT_SERVICE_URL"
 
+experimental_features:
+  msc4143_enabled: true
+
 enable_room_list_search: true
 
 auto_join_rooms:
