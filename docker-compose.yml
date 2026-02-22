@@ -34,6 +34,7 @@ services:
   synapse:
     image: ghcr.io/element-hq/synapse:v1.147.1
     container_name: matrix-synapse
+    entrypoint: ["/bin/sh", "-c", "chown -R 991:991 /data && exec /start.py"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -42,10 +43,11 @@ services:
     volumes:
       - ./runtime/synapse:/data
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8008/_matrix/client/versions', timeout=5)"]
+      test: ["CMD", "curl", "-fSs", "http://localhost:8008/health"]
       interval: 15s
       timeout: 5s
       retries: 10
+      start_period: 5s
     restart: unless-stopped
     networks: [matrix]
 
