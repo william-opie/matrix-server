@@ -21,6 +21,30 @@ After signup, you are auto-joined into the default space and rooms.
 
 Use the same username/password and homeserver URL.
 
+When you sign back in after logging out, Element may show a
+"Confirm your identity" prompt before old encrypted messages are readable.
+
+## Confirm your identity after signing back in (important)
+
+If you see "Confirm your identity", use one of these methods:
+
+1. Verify from a trusted device (recommended):
+   - Keep another signed-in Element device open.
+   - On the new login, choose "Verify with another device".
+   - Approve the request on the trusted device (QR or emoji/SAS check).
+2. Restore Secure Backup:
+   - Choose recovery with your security key or passphrase.
+   - Enter your recovery key/passphrase and finish restore.
+
+If you have neither a trusted device nor your recovery key/passphrase, you can
+still sign in, but old encrypted history may remain unreadable.
+
+## Before you log out of your last device
+
+1. Enable Secure Backup in Element security settings.
+2. Save your recovery key/passphrase in a password manager and an offline copy.
+3. Keep at least one other trusted signed-in device whenever possible.
+
 ## Password reset
 
 Use "Forgot password" in the login screen.

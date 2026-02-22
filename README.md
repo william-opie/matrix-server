@@ -33,6 +33,12 @@ docker compose up -d
 
 See detailed docs in `docs/`.
 
+Quick links:
+
+- User onboarding (including encrypted-message identity confirmation): `docs/user-onboarding.md`
+- Common issues and recovery steps: `docs/troubleshooting.md`
+- Operator setup and deployment flow: `docs/operator-setup.md`
+
 ## Configuration reference (`.env`)
 
 Use `.env.example` as the source of truth. The values below are the main settings most operators need to set first.

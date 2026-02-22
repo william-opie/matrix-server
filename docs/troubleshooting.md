@@ -22,8 +22,15 @@ docker compose logs -f synapse
 
 ## Cannot read old encrypted messages on phone
 
-- Verify the device in Element from a trusted device.
-- Restore Secure Backup with recovery key/passphrase.
+- See `docs/user-onboarding.md` for a full end-user walkthrough of
+  "Confirm your identity" and key-backup prevention steps.
+- If Element shows "Confirm your identity", recover keys with one of these:
+  1. Verify this device from another trusted signed-in device.
+  2. Restore Secure Backup with your recovery key/passphrase.
+- If both options fail because all trusted devices are logged out and the
+  recovery key/passphrase is lost, old encrypted history may be unrecoverable.
+- After regaining access, confirm Secure Backup is enabled and store the
+  recovery key/passphrase safely to prevent future lockout.
 
 ## Admin UI login fails
 
