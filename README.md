@@ -84,6 +84,13 @@ tailscale status --self
 - Group-call media stays on the tailnet and does not rely on public WAN ICE candidates.
 - Clients must be connected to Tailscale for voice/video to work.
 
+### LiveKit host-network architecture
+
+- `livekit` runs with host networking so ICE/media binds to host interfaces directly (instead of Docker bridge addresses).
+- `element-call-web` proxies `/livekit/sfu/*` to `host.docker.internal:7880` so signaling reaches host-networked LiveKit.
+- Redis is bound on `127.0.0.1:6379` so host-networked LiveKit can still connect.
+- Media ports used by LiveKit are `7881/tcp` and `50000-50100/udp` on the host.
+
 ## Service endpoints (local host bindings)
 
 - Matrix Web (Element): `http://127.0.0.1:${ELEMENT_HTTP_PORT}`
