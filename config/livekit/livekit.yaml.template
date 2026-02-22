@@ -1,0 +1,8 @@
+port: 7880
+rtc:
+  tcp_port: 7881
+  use_external_ip: false
+redis:
+  address: matrix-redis:6379
+keys:
+  $LIVEKIT_API_KEY: $LIVEKIT_API_SECRET

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Matrix Admin</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section id="login-card" class="card">
+        <h1>Matrix Admin</h1>
+        <p>Admin-only console (Tailnet + login required)</p>
+        <form id="login-form">
+          <label>Email</label>
+          <input type="email" id="email" required />
+          <label>Password</label>
+          <input type="password" id="password" required />
+          <button type="submit">Sign in</button>
+        </form>
+      </section>
+
+      <section id="dashboard" class="card hidden">
+        <header>
+          <h2>Admin Console</h2>
+          <button id="logout">Sign out</button>
+        </header>
+
+        <div class="grid">
+          <form id="token-form" class="panel">
+            <h3>Create Invite Token</h3>
+            <label>Optional token string</label>
+            <input id="invite-token" placeholder="leave blank for random" />
+            <label>Uses allowed</label>
+            <input id="invite-uses" type="number" min="1" value="1" required />
+            <button type="submit">Create token</button>
+          </form>
+
+          <form id="deactivate-form" class="panel">
+            <h3>Deactivate User</h3>
+            <label>User ID</label>
+            <input id="deactivate-user" placeholder="@alice:server.ts.net" required />
+            <button type="submit">Deactivate</button>
+          </form>
+
+          <form id="reactivate-form" class="panel">
+            <h3>Reactivate User</h3>
+            <label>User ID</label>
+            <input id="reactivate-user" placeholder="@alice:server.ts.net" required />
+            <button type="submit">Reactivate</button>
+          </form>
+
+          <form id="reset-password-form" class="panel">
+            <h3>Admin Password Reset</h3>
+            <label>User ID</label>
+            <input id="reset-user" placeholder="@alice:server.ts.net" required />
+            <label>New Password</label>
+            <input id="reset-password" type="password" required />
+            <button type="submit">Reset Password</button>
+          </form>
+
+          <form id="shutdown-room-form" class="panel">
+            <h3>Shutdown Room/Space</h3>
+            <label>Room ID</label>
+            <input id="room-id" placeholder="!abc123:server.ts.net" required />
+            <label>Message</label>
+            <input id="room-message" value="This room has been closed by an administrator." />
+            <button type="submit">Shutdown</button>
+          </form>
+        </div>
+
+        <section class="panel">
+          <h3>Registration Tokens</h3>
+          <button id="refresh-tokens">Refresh</button>
+          <pre id="token-list"></pre>
+        </section>
+
+        <section class="panel">
+          <h3>Audit Log</h3>
+          <button id="refresh-audit">Refresh</button>
+          <pre id="audit-list"></pre>
+        </section>
+
+        <p id="status"></p>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

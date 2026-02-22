@@ -1,0 +1,75 @@
+server_name: "$MATRIX_SERVER_NAME"
+pid_file: /data/homeserver.pid
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client]
+        compress: false
+
+database:
+  name: psycopg2
+  args:
+    user: "$POSTGRES_USER"
+    password: "$POSTGRES_PASSWORD"
+    database: "$POSTGRES_DB"
+    host: postgres
+    cp_min: 5
+    cp_max: 10
+
+log_config: "/data/$MATRIX_SERVER_NAME.log.config"
+media_store_path: /data/media_store
+signing_key_path: "/data/$MATRIX_SERVER_NAME.signing.key"
+
+registration_shared_secret: "$REGISTRATION_SHARED_SECRET"
+macaroon_secret_key: "$MACAROON_SECRET_KEY"
+form_secret: "$FORM_SECRET"
+report_stats: false
+
+public_baseurl: "$PUBLIC_BASEURL"
+
+enable_registration: $ENABLE_REGISTRATION
+registration_requires_token: $REGISTRATION_REQUIRES_TOKEN
+enable_registration_without_verification: false
+suppress_key_server_warning: true
+
+email:
+  smtp_host: "$SMTP_HOST"
+  smtp_port: $SMTP_PORT
+  smtp_user: "$SMTP_USER"
+  smtp_pass: "$SMTP_PASS"
+  require_transport_security: $SMTP_ENABLE_TLS
+  notif_from: "$SMTP_FROM"
+  app_name: "Private Matrix"
+
+federation_domain_whitelist: []
+allow_public_rooms_without_auth: false
+allow_public_rooms_over_federation: false
+
+trusted_key_servers: []
+
+turn_uris:
+  - "turn:$MATRIX_SERVER_NAME:3478?transport=udp"
+  - "turn:$MATRIX_SERVER_NAME:3478?transport=tcp"
+turn_shared_secret: "$TURN_SECRET"
+turn_user_lifetime: 86400000
+turn_allow_guests: false
+
+enable_room_list_search: true
+
+auto_join_rooms:
+$AUTO_JOIN_ROOMS_YAML
+
+rc_registration:
+  per_second: 0.17
+  burst_count: 3
+
+rc_login:
+  address:
+    per_second: 0.17
+    burst_count: 6
+
+$RETENTION_BLOCK

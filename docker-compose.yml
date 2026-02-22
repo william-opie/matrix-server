@@ -1,0 +1,193 @@
+services:
+  config-renderer:
+    image: python:3.12-slim
+    container_name: matrix-config-renderer
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    env_file:
+      - .env
+    command: ["python", "scripts/render_configs.py"]
+    restart: "no"
+
+  postgres:
+    image: postgres:16
+    container_name: matrix-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [matrix]
+    depends_on:
+      config-renderer:
+        condition: service_completed_successfully
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    container_name: matrix-synapse
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-renderer:
+        condition: service_completed_successfully
+    volumes:
+      - ./runtime/synapse:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8008/_matrix/client/versions', timeout=5)"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [matrix]
+
+  matrix-bootstrap:
+    image: python:3.12-slim
+    container_name: matrix-bootstrap
+    env_file:
+      - .env
+    depends_on:
+      synapse:
+        condition: service_healthy
+      config-renderer:
+        condition: service_completed_successfully
+    volumes:
+      - ./:/workspace
+      - ./data/bootstrap:/state
+    working_dir: /workspace
+    command: ["python", "scripts/bootstrap_matrix.py"]
+    restart: on-failure
+    networks: [matrix]
+
+  coturn:
+    image: instrumentisto/coturn:latest
+    container_name: matrix-coturn
+    ports:
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+      - "49160-49200:49160-49200/udp"
+    environment:
+      TURN_SECRET: ${TURN_SECRET}
+      TURN_REALM: ${TURN_REALM}
+    command: >
+      -n
+      --log-file=stdout
+      --use-auth-secret
+      --static-auth-secret=${TURN_SECRET}
+      --realm=${TURN_REALM}
+      --lt-cred-mech
+      --fingerprint
+      --no-multicast-peers
+      --no-cli
+      --min-port=49160
+      --max-port=49200
+    restart: unless-stopped
+    networks: [matrix]
+
+  element:
+    image: vectorim/element-web:latest
+    container_name: matrix-element
+    depends_on:
+      config-renderer:
+        condition: service_completed_successfully
+    volumes:
+      - ./runtime/element/config.json:/app/config.json:ro
+    restart: unless-stopped
+    networks: [matrix]
+
+  web:
+    image: nginx:alpine
+    container_name: matrix-web
+    depends_on: [synapse, element]
+    ports:
+      - "127.0.0.1:${ELEMENT_HTTP_PORT}:80"
+    volumes:
+      - ./runtime/nginx/matrix.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    networks: [matrix]
+
+  # Element Call self-hosted stack (LiveKit + Element Call web).
+  redis:
+    image: redis:7-alpine
+    container_name: matrix-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ./data/redis:/data
+    restart: unless-stopped
+    networks: [matrix]
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: matrix-livekit
+    command: ["--config", "/etc/livekit.yaml"]
+    volumes:
+      - ./runtime/livekit/livekit.yaml:/etc/livekit.yaml:ro
+    depends_on:
+      config-renderer:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+    ports:
+      - "127.0.0.1:${LIVEKIT_HTTP_PORT}:7880"
+      - "7881:7881/udp"
+    restart: unless-stopped
+    networks: [matrix]
+
+  element-call:
+    image: ghcr.io/element-hq/element-call:latest
+    container_name: matrix-element-call
+    depends_on:
+      livekit:
+        condition: service_started
+      config-renderer:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${ELEMENT_CALL_HTTP_PORT}:8080"
+    volumes:
+      - ./runtime/element-call/config.json:/app/config.json:ro
+    restart: unless-stopped
+    networks: [matrix]
+
+  admin-api:
+    image: python:3.12-slim
+    container_name: matrix-admin-api
+    env_file:
+      - .env
+    working_dir: /workspace/admin-api
+    volumes:
+      - ./:/workspace
+      - ./data/admin-api:/data
+    command: ["/bin/sh", "-c", "pip install --no-cache-dir -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 9000"]
+    depends_on:
+      synapse:
+        condition: service_healthy
+      matrix-bootstrap:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks: [matrix]
+
+  admin-ui:
+    image: nginx:alpine
+    container_name: matrix-admin-ui
+    depends_on:
+      admin-api:
+        condition: service_started
+    ports:
+      - "127.0.0.1:${ADMIN_UI_HTTP_PORT}:80"
+    volumes:
+      - ./admin-ui:/usr/share/nginx/html:ro
+      - ./runtime/nginx/admin-ui.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    networks: [matrix]
+
+networks:
+  matrix:
+    driver: bridge
