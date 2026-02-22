@@ -20,10 +20,21 @@ server {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
   }
 
+  location = /.well-known/matrix/client {
+    default_type application/json;
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "X-Requested-With, Content-Type, Authorization" always;
+    return 200 '{"m.homeserver":{"base_url":"$PUBLIC_BASEURL"},"org.matrix.msc4143.rtc_foci":[{"type":"livekit","livekit_service_url":"$MATRIX_RTC_LIVEKIT_SERVICE_URL"}]}';
+  }
+
+  location = /.well-known/matrix/server {
+    default_type application/json;
+    add_header Access-Control-Allow-Origin "*" always;
+    return 200 '{"m.server":"$MATRIX_SERVER_NAME:443"}';
+  }
+
   location /.well-known/matrix/ {
-    proxy_pass http://matrix-synapse:8008;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-Proto https;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    return 404;
   }
 }
