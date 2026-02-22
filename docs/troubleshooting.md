@@ -38,6 +38,7 @@ docker compose logs -f admin-api
 
 - Verify `livekit` and `element-call` containers are healthy.
 - Check TURN connectivity and UDP firewall settings.
+- Ensure LiveKit media ports are reachable on the host (`50000-50100/udp` and `7881/tcp` in this stack).
 - Confirm `TURN_REALM` matches the homeserver hostname (`MATRIX_SERVER_NAME` / `PUBLIC_BASEURL` host).
 - Confirm Tailnet users can reach Element Call URL.
 - If room calls open Jitsi, verify `ELEMENT_CALL_URL` is set, then re-render config and confirm `runtime/element/config.json` contains `"element_call": {"use_exclusively": true, ...}` and `"features": {"feature_group_calls": true, ...}`.

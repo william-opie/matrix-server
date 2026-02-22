@@ -139,7 +139,8 @@ services:
         condition: service_started
     ports:
       - "127.0.0.1:${LIVEKIT_HTTP_PORT}:7880"
-      - "7881:7881/udp"
+      - "7881:7881/tcp"
+      - "50000-50100:50000-50100/udp"
     restart: unless-stopped
     networks: [matrix]
 
