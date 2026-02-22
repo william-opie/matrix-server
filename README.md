@@ -79,3 +79,4 @@ tailscale status --self
 - `matrix-bootstrap` is idempotent and creates the initial admin user, default Space, and default rooms.
 - Element Web is configured to use your self-hosted Element Call URL exclusively for room conference calls.
 - Admin UI is protected by Tailnet access plus local admin login.
+- Admin UI includes a "Self-Hosting Health" panel that checks local call-stack routing/config and highlights drift.

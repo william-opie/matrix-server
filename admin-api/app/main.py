@@ -5,6 +5,7 @@ import sqlite3
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 import bcrypt
 import jwt
@@ -32,6 +33,12 @@ MATRIX_SERVER_NAME = os.environ["MATRIX_SERVER_NAME"]
 SYNAPSE_URL = os.environ.get("SYNAPSE_URL", "http://matrix-synapse:8008")
 SYNAPSE_ADMIN_LOCALPART = os.environ["BOOTSTRAP_ADMIN_LOCALPART"]
 SYNAPSE_ADMIN_PASSWORD = os.environ["BOOTSTRAP_ADMIN_PASSWORD"]
+PUBLIC_BASEURL = os.environ.get("PUBLIC_BASEURL", "")
+ELEMENT_CALL_URL = os.environ.get("ELEMENT_CALL_URL", "")
+MATRIX_RTC_LIVEKIT_SERVICE_URL = os.environ.get("MATRIX_RTC_LIVEKIT_SERVICE_URL", "")
+ELEMENT_CALL_INTERNAL_URL = os.environ.get("ELEMENT_CALL_INTERNAL_URL", "http://matrix-element-call-web")
+RUNTIME_ROOT = Path(os.environ.get("RUNTIME_ROOT", "/workspace/runtime"))
+REPO_ROOT = Path(os.environ.get("REPO_ROOT", "/workspace"))
 
 
 def db() -> sqlite3.Connection:
@@ -91,6 +98,12 @@ def request_json(method: str, url: str, data: dict | None = None, headers: dict 
     with urllib.request.urlopen(req, timeout=20) as response:
         raw = response.read().decode("utf-8")
         return json.loads(raw) if raw else {}
+
+
+def request_status(method: str, url: str) -> int:
+    req = urllib.request.Request(url, method=method)
+    with urllib.request.urlopen(req, timeout=15) as response:
+        return response.status
 
 
 def matrix_admin_token() -> str:
@@ -170,6 +183,13 @@ class RegistrationTokenRequest(BaseModel):
 class RoomShutdownRequest(BaseModel):
     room_id: str
     message: str = "This room has been closed by an administrator."
+
+
+class SelfHostingCheck(BaseModel):
+    id: str
+    title: str
+    status: str
+    details: str
 
 
 @app.on_event("startup")
@@ -280,6 +300,128 @@ def audit_logs(user: dict = Depends(get_current_user)) -> dict:
             }
             for row in rows
         ]
+    }
+
+
+@app.get("/api/self-hosting/health")
+def self_hosting_health(user: dict = Depends(get_current_user)) -> dict:
+    checks: list[SelfHostingCheck] = []
+
+    def add_check(check_id: str, title: str, ok: bool, details: str, warning: bool = False) -> None:
+        status = "pass" if ok and not warning else "warn" if ok and warning else "fail"
+        checks.append(SelfHostingCheck(id=check_id, title=title, status=status, details=details))
+
+    element_path = RUNTIME_ROOT / "element" / "config.json"
+    synapse_path = RUNTIME_ROOT / "synapse" / "homeserver.yaml"
+    call_nginx_path = RUNTIME_ROOT / "nginx" / "element-call.conf"
+    compose_path = REPO_ROOT / "docker-compose.yml"
+
+    try:
+        element_config = json.loads(element_path.read_text(encoding="utf-8"))
+        element_call = element_config.get("element_call", {})
+        use_exclusively = bool(element_call.get("use_exclusively"))
+        call_url = element_call.get("url", "")
+        no_jitsi = "jitsi" not in element_path.read_text(encoding="utf-8").lower()
+        add_check(
+            "element_call_exclusive",
+            "Element configured for Element Call only",
+            use_exclusively and no_jitsi,
+            f"element_call.url={call_url}, use_exclusively={use_exclusively}, jitsi_refs={not no_jitsi}",
+        )
+    except Exception as exc:
+        add_check("element_call_exclusive", "Element configured for Element Call only", False, f"Read failed: {exc}")
+
+    try:
+        synapse_yaml = synapse_path.read_text(encoding="utf-8")
+        has_matrix_rtc = "matrix_rtc:" in synapse_yaml and "livekit_service_url:" in synapse_yaml
+        has_federation_listener = "names: [client, federation]" in synapse_yaml
+        add_check(
+            "synapse_matrixrtc",
+            "Synapse MatrixRTC + federation listener",
+            has_matrix_rtc and has_federation_listener,
+            f"matrix_rtc={has_matrix_rtc}, federation_listener={has_federation_listener}",
+        )
+    except Exception as exc:
+        add_check("synapse_matrixrtc", "Synapse MatrixRTC + federation listener", False, f"Read failed: {exc}")
+
+    try:
+        nginx_conf = call_nginx_path.read_text(encoding="utf-8")
+        has_jwt_route = "/livekit/jwt/" in nginx_conf and "matrix-livekit-jwt:8080" in nginx_conf
+        has_sfu_route = "/livekit/sfu/" in nginx_conf and "matrix-livekit:7880" in nginx_conf
+        add_check(
+            "call_proxy_routes",
+            "Element Call proxy routes to local services",
+            has_jwt_route and has_sfu_route,
+            f"jwt_route={has_jwt_route}, sfu_route={has_sfu_route}",
+        )
+    except Exception as exc:
+        add_check("call_proxy_routes", "Element Call proxy routes to local services", False, f"Read failed: {exc}")
+
+    try:
+        versions = request_json("GET", f"{SYNAPSE_URL}/_matrix/client/versions")
+        unstable = versions.get("unstable_features", {})
+        has_msc4140 = bool(unstable.get("org.matrix.msc4140"))
+        add_check(
+            "synapse_versions",
+            "Synapse client API reachable",
+            True,
+            f"versions={len(versions.get('versions', []))}, msc4140={has_msc4140}",
+            warning=not has_msc4140,
+        )
+    except Exception as exc:
+        add_check("synapse_versions", "Synapse client API reachable", False, f"Request failed: {exc}")
+
+    try:
+        jwt_status = request_status("GET", f"{ELEMENT_CALL_INTERNAL_URL.rstrip('/')}/livekit/jwt/healthz")
+        add_check(
+            "jwt_health",
+            "LiveKit JWT service reachable",
+            jwt_status == 200,
+            f"status={jwt_status}, endpoint={ELEMENT_CALL_INTERNAL_URL.rstrip('/')}/livekit/jwt/healthz",
+        )
+    except Exception as exc:
+        add_check("jwt_health", "LiveKit JWT service reachable", False, f"Request failed: {exc}")
+
+    try:
+        compose_text = compose_path.read_text(encoding="utf-8")
+        web_local = '127.0.0.1:${ELEMENT_HTTP_PORT}:80' in compose_text
+        call_local = '127.0.0.1:${ELEMENT_CALL_HTTP_PORT}:80' in compose_text
+        admin_local = '127.0.0.1:${ADMIN_UI_HTTP_PORT}:80' in compose_text
+        add_check(
+            "port_binding_posture",
+            "Public web UIs bound to localhost",
+            web_local and call_local and admin_local,
+            f"matrix_web_local={web_local}, element_call_local={call_local}, admin_ui_local={admin_local}",
+        )
+    except Exception as exc:
+        add_check("port_binding_posture", "Public web UIs bound to localhost", False, f"Read failed: {exc}")
+
+    if PUBLIC_BASEURL and ELEMENT_CALL_URL and MATRIX_RTC_LIVEKIT_SERVICE_URL:
+        details = (
+            f"public_baseurl={PUBLIC_BASEURL}, element_call_url={ELEMENT_CALL_URL}, "
+            f"rtc_focus={MATRIX_RTC_LIVEKIT_SERVICE_URL}"
+        )
+        same_domain = MATRIX_SERVER_NAME in PUBLIC_BASEURL and MATRIX_SERVER_NAME in ELEMENT_CALL_URL
+        add_check("tailnet_domain_alignment", "Tailnet domain alignment", same_domain, details)
+    else:
+        add_check(
+            "tailnet_domain_alignment",
+            "Tailnet domain alignment",
+            False,
+            "Missing one or more env values: PUBLIC_BASEURL/ELEMENT_CALL_URL/MATRIX_RTC_LIVEKIT_SERVICE_URL",
+        )
+
+    write_audit(user["sub"], "view_self_hosting_health")
+    statuses = [check.status for check in checks]
+    overall = "fail" if "fail" in statuses else "warn" if "warn" in statuses else "pass"
+    return {
+        "generated_at": dt.datetime.utcnow().isoformat() + "Z",
+        "overall": overall,
+        "checks": [check.model_dump() for check in checks],
+        "note": (
+            "This report verifies self-hosted configuration and runtime paths. "
+            "It cannot cryptographically prove that no packet ever leaves your tailnet."
+        ),
     }
 
 

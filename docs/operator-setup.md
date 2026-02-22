@@ -88,6 +88,9 @@ tailscale serve status
 > Consider using [Tailscale ACLs](https://tailscale.com/kb/1018/acls) to
 > restrict which tailnet users can reach the admin ports.
 
+The Admin UI dashboard includes a **Self-Hosting Health** panel (admin-only)
+that validates MatrixRTC/LiveKit routing and key self-hosting posture checks.
+
 ## 4) Registration model
 
 - Open registration is disabled by token requirement.

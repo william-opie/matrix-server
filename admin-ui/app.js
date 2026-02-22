@@ -50,6 +50,11 @@ async function refreshAudit() {
   document.getElementById("audit-list").textContent = JSON.stringify(payload, null, 2);
 }
 
+async function refreshSelfHostingHealth() {
+  const payload = await api("/self-hosting/health");
+  document.getElementById("self-hosting-report").textContent = JSON.stringify(payload, null, 2);
+}
+
 document.getElementById("login-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
@@ -64,6 +69,7 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
     showDashboard();
     await refreshTokens();
     await refreshAudit();
+    await refreshSelfHostingHealth();
     setStatus("Signed in");
   } catch (error) {
     setStatus(error.message, true);
@@ -173,6 +179,15 @@ document.getElementById("refresh-audit").addEventListener("click", async () => {
   }
 });
 
+document.getElementById("refresh-self-hosting").addEventListener("click", async () => {
+  try {
+    await refreshSelfHostingHealth();
+    setStatus("Self-hosting report refreshed");
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+});
+
 (async () => {
   if (!token()) {
     showLogin();
@@ -184,6 +199,7 @@ document.getElementById("refresh-audit").addEventListener("click", async () => {
     showDashboard();
     await refreshTokens();
     await refreshAudit();
+    await refreshSelfHostingHealth();
     setStatus("Session restored");
   } catch {
     localStorage.removeItem("adminToken");
