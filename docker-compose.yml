@@ -152,10 +152,45 @@ services:
         condition: service_started
       config-renderer:
         condition: service_completed_successfully
-    ports:
-      - "127.0.0.1:${ELEMENT_CALL_HTTP_PORT}:8080"
     volumes:
       - ./runtime/element-call/config.json:/app/config.json:ro
+    restart: unless-stopped
+    networks: [matrix]
+
+  livekit-jwt:
+    image: ghcr.io/element-hq/lk-jwt-service:latest
+    container_name: matrix-livekit-jwt
+    env_file:
+      - .env
+    environment:
+      LIVEKIT_URL: ${LIVEKIT_SFU_URL}
+      LIVEKIT_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_SECRET: ${LIVEKIT_API_SECRET}
+      LIVEKIT_FULL_ACCESS_HOMESERVERS: ${MATRIX_SERVER_NAME}
+    depends_on:
+      synapse:
+        condition: service_healthy
+      livekit:
+        condition: service_started
+    restart: unless-stopped
+    networks: [matrix]
+
+  element-call-web:
+    image: nginx:alpine
+    container_name: matrix-element-call-web
+    depends_on:
+      element-call:
+        condition: service_started
+      livekit-jwt:
+        condition: service_started
+      livekit:
+        condition: service_started
+      config-renderer:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${ELEMENT_CALL_HTTP_PORT}:80"
+    volumes:
+      - ./runtime/nginx/element-call.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
     networks: [matrix]
 

@@ -45,3 +45,5 @@ docker compose logs -f admin-api
 - If you see `MISSING_MATRIX_RTC_FOCUS`, verify Synapse has `matrix_rtc.transports` configured with a `livekit_service_url` (in this repo from `MATRIX_RTC_LIVEKIT_SERVICE_URL`, defaulting to `${ELEMENT_CALL_URL}/livekit/jwt`).
 - Synapse 1.147+ may require `experimental_features.msc4143_enabled: true` so Element's `/_matrix/client/unstable/org.matrix.msc4143/rtc/transports` request succeeds.
 - Ensure `/.well-known/matrix/client` is served by Synapse and includes `org.matrix.msc4143.rtc_foci` pointing to your LiveKit JWT endpoint.
+- If `GET /livekit/jwt/sfu/get` returns `405`, ensure the Element Call endpoint is fronted by a reverse proxy routing `/livekit/jwt/*` to `lk-jwt-service` and `/livekit/sfu/*` to LiveKit.
+- If LiveKit logs `secret is too short`, set `LIVEKIT_API_SECRET` to at least 32 characters and restart `livekit` + `livekit-jwt`.

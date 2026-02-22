@@ -25,6 +25,14 @@ def to_bool(value: str) -> str:
     return "true" if value.lower() in {"1", "true", "yes", "on"} else "false"
 
 
+def https_to_ws(url: str) -> str:
+    if url.startswith("https://"):
+        return "wss://" + url[len("https://") :]
+    if url.startswith("http://"):
+        return "ws://" + url[len("http://") :]
+    return url
+
+
 def render_template(src: Path, dst: Path, context: dict[str, str]) -> None:
     content = src.read_text(encoding="utf-8")
     rendered = Template(content).safe_substitute(context)
@@ -85,6 +93,8 @@ def main() -> None:
     env["SMTP_ENABLE_TLS"] = to_bool(env.get("SMTP_ENABLE_TLS", "true"))
     if not env.get("MATRIX_RTC_LIVEKIT_SERVICE_URL"):
         env["MATRIX_RTC_LIVEKIT_SERVICE_URL"] = f"{env['ELEMENT_CALL_URL'].rstrip('/')}/livekit/jwt"
+    if not env.get("LIVEKIT_SFU_URL"):
+        env["LIVEKIT_SFU_URL"] = f"{https_to_ws(env['ELEMENT_CALL_URL'].rstrip('/'))}/livekit/sfu"
     env.setdefault("MAX_EVENT_DELAY_DURATION", "24h")
     env.setdefault("RC_MESSAGE_PER_SECOND", "0.5")
     env.setdefault("RC_MESSAGE_BURST_COUNT", "30")
@@ -121,6 +131,11 @@ def main() -> None:
     render_template(
         ROOT / "config" / "nginx" / "admin-ui.conf.template",
         ROOT / "runtime" / "nginx" / "admin-ui.conf",
+        env,
+    )
+    render_template(
+        ROOT / "config" / "nginx" / "element-call.conf.template",
+        ROOT / "runtime" / "nginx" / "element-call.conf",
         env,
     )
     render_template(
