@@ -89,6 +89,17 @@ def main() -> None:
         ROOT / "runtime" / "synapse" / "homeserver.yaml",
         env,
     )
+
+    # Render log config so Synapse does not auto-generate one that writes to
+    # /homeserver.log (which is not writable when running as UID 991).
+    server_name = env["MATRIX_SERVER_NAME"]
+    log_config_dst = ROOT / "runtime" / "synapse" / f"{server_name}.log.config"
+    render_template(
+        ROOT / "config" / "synapse" / "log.config",
+        log_config_dst,
+        env,
+    )
+
     render_template(
         ROOT / "config" / "element" / "config.json.template",
         ROOT / "runtime" / "element" / "config.json",
