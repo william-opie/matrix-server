@@ -3,8 +3,10 @@
 ## Join the server
 
 1. Install Tailscale and sign in.
-2. Get access to the operator's tailnet.
-3. Open the provided Element URL.
+2. Accept an invite from the server admin to get access to the Matrix server.
+3. Copy and paste the server URL into your browser.
+
+This YouTube video walks through the Tailscale account sign-up and install process: https://youtu.be/Vt4PDUXB_fg?t=646
 
 ## Create account
 
