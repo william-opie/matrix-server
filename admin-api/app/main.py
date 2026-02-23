@@ -2,6 +2,8 @@ import datetime as dt
 import json
 import os
 import sqlite3
+import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -17,16 +19,8 @@ from pydantic import BaseModel, Field
 
 app = FastAPI(title="Matrix Admin API", version="0.1.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 DB_PATH = os.environ.get("ADMIN_DB_PATH", "/data/admin.db")
-AUTH_SECRET = os.environ.get("ADMIN_AUTH_SECRET", "change-me")
+AUTH_SECRET = os.environ.get("ADMIN_AUTH_SECRET", "")
 TOKEN_TTL_MINUTES = int(os.environ.get("ADMIN_TOKEN_TTL_MINUTES", "480"))
 
 MATRIX_SERVER_NAME = os.environ["MATRIX_SERVER_NAME"]
@@ -39,6 +33,27 @@ MATRIX_RTC_LIVEKIT_SERVICE_URL = os.environ.get("MATRIX_RTC_LIVEKIT_SERVICE_URL"
 ELEMENT_CALL_INTERNAL_URL = os.environ.get("ELEMENT_CALL_INTERNAL_URL", "http://matrix-element-call-web")
 RUNTIME_ROOT = Path(os.environ.get("RUNTIME_ROOT", "/workspace/runtime"))
 REPO_ROOT = Path(os.environ.get("REPO_ROOT", "/workspace"))
+
+ADMIN_UI_HTTP_PORT = os.environ.get("ADMIN_UI_HTTP_PORT", "8090")
+_cors_origins = [
+    f"http://127.0.0.1:{ADMIN_UI_HTTP_PORT}",
+    f"https://{MATRIX_SERVER_NAME}:8444",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ---------------------------------------------------------------------------
+# Synapse admin token cache
+# ---------------------------------------------------------------------------
+_cached_admin_token: str | None = None
+_cached_admin_token_ts: float = 0.0
+_TOKEN_CACHE_TTL: int = 30 * 60  # 30 minutes
 
 
 def db() -> sqlite3.Connection:
@@ -80,7 +95,7 @@ def init_db() -> None:
         password_hash = bcrypt.hashpw(bootstrap_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
         conn.execute(
             "INSERT INTO admin_users(email, password_hash, role, created_at) VALUES (?, ?, ?, ?)",
-            (bootstrap_email, password_hash, "admin", dt.datetime.utcnow().isoformat()),
+            (bootstrap_email, password_hash, "admin", dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).isoformat()),
         )
     conn.commit()
     conn.close()
@@ -106,7 +121,18 @@ def request_status(method: str, url: str) -> int:
         return response.status
 
 
+def _invalidate_token_cache() -> None:
+    global _cached_admin_token, _cached_admin_token_ts
+    _cached_admin_token = None
+    _cached_admin_token_ts = 0.0
+
+
 def matrix_admin_token() -> str:
+    global _cached_admin_token, _cached_admin_token_ts
+    now = time.monotonic()
+    if _cached_admin_token and (now - _cached_admin_token_ts) < _TOKEN_CACHE_TTL:
+        return _cached_admin_token
+
     login_payload = {
         "type": "m.login.password",
         "identifier": {
@@ -116,27 +142,38 @@ def matrix_admin_token() -> str:
         "password": SYNAPSE_ADMIN_PASSWORD,
     }
     response = request_json("POST", f"{SYNAPSE_URL}/_matrix/client/v3/login", login_payload)
-    return response["access_token"]
+    token: str = response["access_token"]
+    _cached_admin_token = token
+    _cached_admin_token_ts = now
+    return token
 
 
 def synapse_admin(method: str, path: str, body: dict | None = None) -> dict:
     token = matrix_admin_token()
     headers = {"Authorization": f"Bearer {token}"}
-    return request_json(method, f"{SYNAPSE_URL}{path}", body, headers)
+    try:
+        return request_json(method, f"{SYNAPSE_URL}{path}", body, headers)
+    except urllib.error.HTTPError as exc:
+        if exc.code == 401:
+            _invalidate_token_cache()
+            token = matrix_admin_token()
+            headers = {"Authorization": f"Bearer {token}"}
+            return request_json(method, f"{SYNAPSE_URL}{path}", body, headers)
+        raise
 
 
 def write_audit(actor_email: str, action: str, target: str = "") -> None:
     conn = db()
     conn.execute(
         "INSERT INTO audit_logs(actor_email, action, target, created_at) VALUES (?, ?, ?, ?)",
-        (actor_email, action, target, dt.datetime.utcnow().isoformat()),
+        (actor_email, action, target, dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).isoformat()),
     )
     conn.commit()
     conn.close()
 
 
 def create_jwt(email: str, role: str) -> str:
-    now = dt.datetime.utcnow()
+    now = dt.datetime.now(dt.timezone.utc)
     payload = {
         "sub": email,
         "role": role,
@@ -194,6 +231,12 @@ class SelfHostingCheck(BaseModel):
 
 @app.on_event("startup")
 def on_startup() -> None:
+    if not AUTH_SECRET or AUTH_SECRET == "change-me":
+        print(
+            "FATAL: ADMIN_AUTH_SECRET is not set or is still the default value. "
+            "Set a strong secret in .env"
+        )
+        sys.exit(1)
     init_db()
 
 
@@ -262,7 +305,6 @@ def create_registration_token(payload: RegistrationTokenRequest, user: dict = De
 @app.get("/api/registration-tokens")
 def list_registration_tokens(user: dict = Depends(get_current_user)) -> dict:
     response = synapse_admin("GET", "/_synapse/admin/v1/registration_tokens")
-    write_audit(user["sub"], "list_registration_tokens")
     return response
 
 
@@ -289,7 +331,6 @@ def audit_logs(user: dict = Depends(get_current_user)) -> dict:
         "SELECT actor_email, action, target, created_at FROM audit_logs ORDER BY id DESC LIMIT 200"
     ).fetchall()
     conn.close()
-    write_audit(user["sub"], "view_audit_logs")
     return {
         "logs": [
             {
@@ -413,11 +454,10 @@ def self_hosting_health(user: dict = Depends(get_current_user)) -> dict:
             "Missing one or more env values: PUBLIC_BASEURL/ELEMENT_CALL_URL/MATRIX_RTC_LIVEKIT_SERVICE_URL",
         )
 
-    write_audit(user["sub"], "view_self_hosting_health")
     statuses = [check.status for check in checks]
     overall = "fail" if "fail" in statuses else "warn" if "warn" in statuses else "pass"
     return {
-        "generated_at": dt.datetime.utcnow().isoformat() + "Z",
+        "generated_at": dt.datetime.now(dt.timezone.utc).replace(tzinfo=None).isoformat() + "Z",
         "overall": overall,
         "checks": [check.model_dump() for check in checks],
         "note": (

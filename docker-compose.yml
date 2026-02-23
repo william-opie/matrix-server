@@ -195,15 +195,23 @@ services:
     networks: [matrix]
 
   admin-api:
-    image: python:3.12-slim
+    build: ./admin-api
     container_name: matrix-admin-api
     env_file:
       - .env
-    working_dir: /workspace/admin-api
+    environment:
+      RUNTIME_ROOT: /runtime
+      REPO_ROOT: /workspace
     volumes:
-      - ./:/workspace
       - ./data/admin-api:/data
-    command: ["/bin/sh", "-c", "pip install --no-cache-dir -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 9000"]
+      - ./runtime:/runtime:ro
+      - ./docker-compose.yml:/workspace/docker-compose.yml:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fSs", "http://localhost:9000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     depends_on:
       synapse:
         condition: service_healthy
@@ -217,7 +225,7 @@ services:
     container_name: matrix-admin-ui
     depends_on:
       admin-api:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "127.0.0.1:${ADMIN_UI_HTTP_PORT}:80"
     volumes:
