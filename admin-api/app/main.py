@@ -10,23 +10,24 @@ from pathlib import Path
 import bcrypt
 import jwt
 from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 
 app = FastAPI(title="Matrix Admin API", version="0.1.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# SECURITY: Removed permissive CORS middleware. The API is intended to be used
+# only by the same-origin frontend via Nginx proxy.
 
 DB_PATH = os.environ.get("ADMIN_DB_PATH", "/data/admin.db")
 AUTH_SECRET = os.environ.get("ADMIN_AUTH_SECRET", "change-me")
+
+# Validate secret on load to prevent weak defaults
+if not AUTH_SECRET or AUTH_SECRET == "change-me" or "CHANGE_ME" in AUTH_SECRET:
+    # Print error and exit to prevent insecure startup
+    print("FATAL: CRITICAL SECURITY ERROR: ADMIN_AUTH_SECRET is set to a default/weak value.")
+    print("Please update your .env file with a strong secret.")
+    exit(1)
 TOKEN_TTL_MINUTES = int(os.environ.get("ADMIN_TOKEN_TTL_MINUTES", "480"))
 
 MATRIX_SERVER_NAME = os.environ["MATRIX_SERVER_NAME"]
