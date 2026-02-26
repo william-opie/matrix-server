@@ -26,7 +26,10 @@ app.add_middleware(
 )
 
 DB_PATH = os.environ.get("ADMIN_DB_PATH", "/data/admin.db")
-AUTH_SECRET = os.environ.get("ADMIN_AUTH_SECRET", "change-me")
+AUTH_SECRET = os.environ.get("ADMIN_AUTH_SECRET", "")
+if not AUTH_SECRET or AUTH_SECRET == "change-me":
+    raise RuntimeError("ADMIN_AUTH_SECRET must be set and cannot be default 'change-me'")
+
 TOKEN_TTL_MINUTES = int(os.environ.get("ADMIN_TOKEN_TTL_MINUTES", "480"))
 
 MATRIX_SERVER_NAME = os.environ["MATRIX_SERVER_NAME"]
