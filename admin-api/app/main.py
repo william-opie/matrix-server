@@ -10,29 +10,18 @@ from pathlib import Path
 import bcrypt
 import jwt
 from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 
 app = FastAPI(title="Matrix Admin API", version="0.1.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 DB_PATH = os.environ.get("ADMIN_DB_PATH", "/data/admin.db")
 AUTH_SECRET = os.environ.get("ADMIN_AUTH_SECRET", "")
-# 🛡️ Sentinel Security Check: Enforce fail-secure behavior for JWT secret
-# Refuse to start if the admin auth secret is missing or set to a known placeholder.
-# If an attacker can guess the secret, they can forge admin tokens and take full control.
-if not AUTH_SECRET or AUTH_SECRET in ("change-me", "CHANGE_ME_JWT_SECRET"):
+# Refuse to start if the admin auth secret is missing or too short.
+if not AUTH_SECRET or len(AUTH_SECRET) < 32:
     raise RuntimeError(
-        "CRITICAL SECURITY ERROR: ADMIN_AUTH_SECRET is not set or is using a default insecure value. "
+        "CRITICAL SECURITY ERROR: ADMIN_AUTH_SECRET is not set or is too short (less than 32 characters). "
         "You must set a strong, unique ADMIN_AUTH_SECRET in your environment before starting."
     )
 TOKEN_TTL_MINUTES = int(os.environ.get("ADMIN_TOKEN_TTL_MINUTES", "480"))
