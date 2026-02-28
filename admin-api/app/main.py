@@ -26,7 +26,15 @@ app.add_middleware(
 )
 
 DB_PATH = os.environ.get("ADMIN_DB_PATH", "/data/admin.db")
-AUTH_SECRET = os.environ.get("ADMIN_AUTH_SECRET", "change-me")
+AUTH_SECRET = os.environ.get("ADMIN_AUTH_SECRET", "")
+# 🛡️ Sentinel Security Check: Enforce fail-secure behavior for JWT secret
+# Refuse to start if the admin auth secret is missing or set to a known placeholder.
+# If an attacker can guess the secret, they can forge admin tokens and take full control.
+if not AUTH_SECRET or AUTH_SECRET in ("change-me", "CHANGE_ME_JWT_SECRET"):
+    raise RuntimeError(
+        "CRITICAL SECURITY ERROR: ADMIN_AUTH_SECRET is not set or is using a default insecure value. "
+        "You must set a strong, unique ADMIN_AUTH_SECRET in your environment before starting."
+    )
 TOKEN_TTL_MINUTES = int(os.environ.get("ADMIN_TOKEN_TTL_MINUTES", "480"))
 
 MATRIX_SERVER_NAME = os.environ["MATRIX_SERVER_NAME"]
