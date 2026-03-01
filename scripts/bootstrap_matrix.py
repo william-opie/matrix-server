@@ -45,7 +45,13 @@ def shared_secret_register(localpart: str, password: str, admin: bool, shared_se
     mac_builder.update(b"\x00")
     mac_builder.update(localpart.encode("utf-8"))
     mac_builder.update(b"\x00")
-    mac_builder.update(password.encode("utf-8"))
+    # HMAC-SHA1 is mandated by the Synapse shared-secret registration API
+    # (see UserRegisterServlet in synapse/rest/admin/users.py).
+    # The password is not being hashed for storage (Synapse does that with bcrypt);
+    # it is included in a MAC to authenticate this registration request.
+    # HMAC-SHA1 remains secure for message authentication.
+    # Ref: https://github.com/element-hq/synapse/blob/develop/synapse/rest/admin/users.py
+    mac_builder.update(password.encode("utf-8"))  # CodeQL [py/weak-sensitive-data-hashing]
     mac_builder.update(b"\x00")
     mac_builder.update(b"admin" if admin else b"notadmin")
     mac = mac_builder.hexdigest()
