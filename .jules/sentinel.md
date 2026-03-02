@@ -1,4 +1,0 @@
-## 2024-02-28 - [CRITICAL] Hardcoded Admin JWT Secret
-**Vulnerability:** The Admin API used a default hardcoded value ("change-me") for `ADMIN_AUTH_SECRET` if not provided in the environment. This means if a user failed to configure the `.env` correctly, the application would silently start up with a known JWT signing secret.
-**Learning:** This could allow an attacker to forge JWT tokens and gain full administrative access to the API. Security defaults should enforce fail-secure behavior, not silent fallbacks to insecure states.
-**Prevention:** Remove default values for sensitive secrets. Add an explicit startup check that raises an exception if the secret is missing or set to known placeholder values (like "change-me" or "CHANGE_ME_JWT_SECRET"), preventing the application from starting in an insecure state.
