@@ -1,4 +1,4 @@
 fastapi==0.116.1
-uvicorn==0.35.0
+uvicorn==0.41.0
 bcrypt==4.3.0
 PyJWT==2.11.0
