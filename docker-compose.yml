@@ -11,7 +11,7 @@ services:
     restart: "no"
 
   postgres:
-    image: postgres:16
+    image: postgres:18
     container_name: matrix-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
