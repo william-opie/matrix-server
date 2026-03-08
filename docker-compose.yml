@@ -118,7 +118,7 @@ services:
 
   # Element Call self-hosted stack (LiveKit + Element Call web).
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: matrix-redis
     command: ["redis-server", "--appendonly", "yes"]
     ports:
