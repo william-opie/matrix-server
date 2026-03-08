@@ -10,7 +10,7 @@ server {
   }
 
   location /api/ {
-    proxy_pass $admin_api_upstream$request_uri;
+    proxy_pass $admin_api_upstream$uri$is_args$args;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-Proto https;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
