@@ -1,5 +1,8 @@
 server {
   listen 80;
+  resolver 127.0.0.11 valid=30s ipv6=off;
+
+  set $admin_api_upstream http://matrix-admin-api:9000;
 
   location / {
     root /usr/share/nginx/html;
@@ -7,7 +10,7 @@ server {
   }
 
   location /api/ {
-    proxy_pass http://matrix-admin-api:9000/api/;
+    proxy_pass $admin_api_upstream$uri$is_args$args;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-Proto https;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

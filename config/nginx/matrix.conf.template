@@ -1,20 +1,24 @@
 server {
   listen 80;
+  resolver 127.0.0.11 valid=30s ipv6=off;
+
+  set $element_upstream http://matrix-element:80;
+  set $synapse_upstream http://matrix-synapse:8008;
 
   location / {
-    proxy_pass http://matrix-element:80;
+    proxy_pass $element_upstream$uri$is_args$args;
     proxy_set_header Host $host;
   }
 
   location /_matrix/ {
-    proxy_pass http://matrix-synapse:8008;
+    proxy_pass $synapse_upstream$uri$is_args$args;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-Proto https;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
   }
 
   location /_synapse/client/ {
-    proxy_pass http://matrix-synapse:8008;
+    proxy_pass $synapse_upstream$request_uri$is_args$args;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-Proto https;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
