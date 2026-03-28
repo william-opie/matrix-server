@@ -3,16 +3,15 @@
     "m.homeserver": {
       "base_url": "$PUBLIC_BASEURL",
       "server_name": "$MATRIX_SERVER_NAME"
-    }
+    },
+    "org.matrix.msc4143.rtc_foci": [
+      {
+        "type": "livekit",
+        "livekit_service_url": "$MATRIX_RTC_LIVEKIT_SERVICE_URL"
+      }
+    ]
   },
   "features": {
     "feature_group_calls": true
-  },
-  "livekit": {
-    "url": "http://matrix-livekit:7880",
-    "jwt": {
-      "api_key": "$LIVEKIT_API_KEY",
-      "api_secret": "$LIVEKIT_API_SECRET"
-    }
   }
 }
