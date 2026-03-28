@@ -304,8 +304,6 @@ def audit_logs(
             (limit,),
         ).fetchall()
     conn.close()
-    action_name = "view_audit_log_preview" if limit == 10 else "view_audit_logs"
-    write_audit(user["sub"], action_name)
     return {
         "logs": [
             {
