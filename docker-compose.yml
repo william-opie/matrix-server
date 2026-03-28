@@ -32,7 +32,7 @@ services:
         condition: service_completed_successfully
 
   synapse:
-    image: ghcr.io/element-hq/synapse:v1.148.0
+    image: ghcr.io/element-hq/synapse:v1.150.0
     container_name: matrix-synapse
     entrypoint: ["/bin/sh", "-c", "chown -R 991:991 /data && exec /start.py"]
     depends_on:
