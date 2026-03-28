@@ -76,9 +76,15 @@
         </section>
 
         <section class="panel">
-          <h3>Audit Log</h3>
-          <button id="refresh-audit">Refresh</button>
-          <pre id="audit-list"></pre>
+          <h3>Audit Log <span class="audit-preview-label">(last 10)</span></h3>
+          <div class="audit-toolbar">
+            <button id="refresh-audit">Refresh</button>
+            <button id="view-full-audit">View Full Audit Log</button>
+          </div>
+          <table class="audit-table">
+            <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th></tr></thead>
+            <tbody id="audit-preview-body"></tbody>
+          </table>
         </section>
 
         <section class="panel">
@@ -88,6 +94,28 @@
         </section>
 
         <p id="status"></p>
+      </section>
+      <section id="audit-log-page" class="card hidden">
+        <header>
+          <h2>Full Audit Log</h2>
+          <button id="back-to-dashboard">Back to Dashboard</button>
+        </header>
+        <div class="audit-toolbar">
+          <label for="audit-time-filter">Time window</label>
+          <select id="audit-time-filter">
+            <option value="">All Time</option>
+            <option value="1h">Last Hour</option>
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+          </select>
+          <button id="refresh-full-audit">Refresh</button>
+        </div>
+        <table class="audit-table">
+          <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th></tr></thead>
+          <tbody id="audit-full-body"></tbody>
+        </table>
+        <p id="audit-full-status"></p>
       </section>
     </main>
 

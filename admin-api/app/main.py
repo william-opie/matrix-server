@@ -280,13 +280,32 @@ def shutdown_room(payload: RoomShutdownRequest, user: dict = Depends(get_current
 
 
 @app.get("/api/audit-logs")
-def audit_logs(user: dict = Depends(get_current_user)) -> dict:
+def audit_logs(
+    user: dict = Depends(get_current_user),
+    since: str | None = None,
+    limit: int = 200,
+) -> dict:
+    if since:
+        try:
+            dt.datetime.fromisoformat(since)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid 'since' format; use ISO 8601")
     conn = db()
-    rows = conn.execute(
-        "SELECT actor_email, action, target, created_at FROM audit_logs ORDER BY id DESC LIMIT 200"
-    ).fetchall()
+    if since:
+        rows = conn.execute(
+            "SELECT actor_email, action, target, created_at FROM audit_logs "
+            "WHERE created_at >= ? ORDER BY id DESC LIMIT ?",
+            (since, limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT actor_email, action, target, created_at FROM audit_logs "
+            "ORDER BY id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
     conn.close()
-    write_audit(user["sub"], "view_audit_logs")
+    action_name = "view_audit_log_preview" if limit == 10 else "view_audit_logs"
+    write_audit(user["sub"], action_name)
     return {
         "logs": [
             {

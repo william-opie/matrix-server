@@ -1,5 +1,6 @@
 const loginCard = document.getElementById("login-card");
 const dashboard = document.getElementById("dashboard");
+const auditLogPage = document.getElementById("audit-log-page");
 const statusEl = document.getElementById("status");
 
 function setStatus(message, isError = false) {
@@ -32,12 +33,63 @@ async function api(path, options = {}) {
 
 function showDashboard() {
   loginCard.classList.add("hidden");
+  auditLogPage.classList.add("hidden");
   dashboard.classList.remove("hidden");
 }
 
 function showLogin() {
   dashboard.classList.add("hidden");
+  auditLogPage.classList.add("hidden");
   loginCard.classList.remove("hidden");
+}
+
+function showAuditLog() {
+  loginCard.classList.add("hidden");
+  dashboard.classList.add("hidden");
+  auditLogPage.classList.remove("hidden");
+}
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function formatDateTime(isoString) {
+  const date = new Date(isoString.endsWith("Z") ? isoString : isoString + "Z");
+  return date.toLocaleString();
+}
+
+function sinceFromWindow(windowValue) {
+  if (!windowValue) return null;
+  const offsets = { "1h": 60, "24h": 1440, "7d": 10080, "30d": 43200 };
+  const minutes = offsets[windowValue];
+  if (!minutes) return null;
+  const since = new Date(Date.now() - minutes * 60 * 1000);
+  return since.toISOString().split(".")[0];
+}
+
+function renderAuditRows(tbodyId, logs) {
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = "";
+  if (logs.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="4" class="audit-empty">No entries found.</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+  for (const log of logs) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${formatDateTime(log.created_at)}</td>
+      <td>${escapeHtml(log.actor_email)}</td>
+      <td>${escapeHtml(log.action)}</td>
+      <td>${escapeHtml(log.target || "")}</td>
+    `;
+    tbody.appendChild(tr);
+  }
 }
 
 async function refreshTokens() {
@@ -46,8 +98,15 @@ async function refreshTokens() {
 }
 
 async function refreshAudit() {
-  const payload = await api("/audit-logs");
-  document.getElementById("audit-list").textContent = JSON.stringify(payload, null, 2);
+  const payload = await api("/audit-logs?limit=10");
+  renderAuditRows("audit-preview-body", payload.logs);
+}
+
+async function refreshFullAudit() {
+  const since = sinceFromWindow(document.getElementById("audit-time-filter").value);
+  const qs = since ? `?since=${encodeURIComponent(since)}` : "";
+  const payload = await api(`/audit-logs${qs}`);
+  renderAuditRows("audit-full-body", payload.logs);
 }
 
 async function refreshSelfHostingHealth() {
@@ -185,6 +244,36 @@ document.getElementById("refresh-self-hosting").addEventListener("click", async 
     setStatus("Self-hosting report refreshed");
   } catch (error) {
     setStatus(error.message, true);
+  }
+});
+
+document.getElementById("view-full-audit").addEventListener("click", async () => {
+  showAuditLog();
+  try {
+    await refreshFullAudit();
+  } catch (error) {
+    document.getElementById("audit-full-status").textContent = error.message;
+  }
+});
+
+document.getElementById("back-to-dashboard").addEventListener("click", () => {
+  showDashboard();
+});
+
+document.getElementById("refresh-full-audit").addEventListener("click", async () => {
+  try {
+    await refreshFullAudit();
+    document.getElementById("audit-full-status").textContent = "Refreshed";
+  } catch (error) {
+    document.getElementById("audit-full-status").textContent = error.message;
+  }
+});
+
+document.getElementById("audit-time-filter").addEventListener("change", async () => {
+  try {
+    await refreshFullAudit();
+  } catch (error) {
+    document.getElementById("audit-full-status").textContent = error.message;
   }
 });
 
