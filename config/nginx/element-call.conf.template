@@ -9,7 +9,7 @@ server {
   }
 
   location = /livekit/jwt {
-    return 308 /livekit/jwt/;
+    return 308 /livekit/jwt/$is_args$args;
   }
 
   location ^~ /livekit/jwt/ {
