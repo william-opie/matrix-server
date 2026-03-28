@@ -9,7 +9,7 @@ from pathlib import Path
 
 import bcrypt
 import jwt
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -280,13 +280,34 @@ def shutdown_room(payload: RoomShutdownRequest, user: dict = Depends(get_current
 
 
 @app.get("/api/audit-logs")
-def audit_logs(user: dict = Depends(get_current_user)) -> dict:
+def audit_logs(
+    user: dict = Depends(get_current_user),
+    since: str | None = None,
+    limit: int = Query(default=200, ge=1, le=1000),
+) -> dict:
+    if since:
+        try:
+            parsed = dt.datetime.fromisoformat(since.replace("Z", "+00:00"))
+            # Normalize to UTC-naive isoformat to match stored format
+            if parsed.tzinfo is not None:
+                parsed = parsed.astimezone(dt.timezone.utc).replace(tzinfo=None)
+            since = parsed.isoformat()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid 'since' format; use ISO 8601")
     conn = db()
-    rows = conn.execute(
-        "SELECT actor_email, action, target, created_at FROM audit_logs ORDER BY id DESC LIMIT 200"
-    ).fetchall()
+    if since:
+        rows = conn.execute(
+            "SELECT actor_email, action, target, created_at FROM audit_logs "
+            "WHERE created_at >= ? ORDER BY id DESC LIMIT ?",
+            (since, limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT actor_email, action, target, created_at FROM audit_logs "
+            "ORDER BY id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
     conn.close()
-    write_audit(user["sub"], "view_audit_logs")
     return {
         "logs": [
             {
