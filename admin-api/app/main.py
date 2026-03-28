@@ -287,7 +287,11 @@ def audit_logs(
 ) -> dict:
     if since:
         try:
-            dt.datetime.fromisoformat(since)
+            parsed = dt.datetime.fromisoformat(since.replace("Z", "+00:00"))
+            # Normalize to UTC-naive isoformat to match stored format
+            if parsed.tzinfo is not None:
+                parsed = parsed.astimezone(dt.timezone.utc).replace(tzinfo=None)
+            since = parsed.isoformat()
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid 'since' format; use ISO 8601")
     conn = db()
