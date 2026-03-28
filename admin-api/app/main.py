@@ -9,7 +9,7 @@ from pathlib import Path
 
 import bcrypt
 import jwt
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -283,7 +283,7 @@ def shutdown_room(payload: RoomShutdownRequest, user: dict = Depends(get_current
 def audit_logs(
     user: dict = Depends(get_current_user),
     since: str | None = None,
-    limit: int = 200,
+    limit: int = Query(default=200, ge=1, le=1000),
 ) -> dict:
     if since:
         try:
